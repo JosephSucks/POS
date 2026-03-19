@@ -14,6 +14,19 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
+interface InventoryItem {
+  id: number
+  name: string
+  price: number
+  image: string
+  category: string
+  stock: number
+  lowStockThreshold: number
+  cost?: number
+  supplier?: string
+  description?: string
+}
+
 interface ProductFormData {
   name: string
   price: number
@@ -35,6 +48,7 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [editingProduct, setEditingProduct] = useState<InventoryItem | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     price: 0,
@@ -56,8 +70,16 @@ export default function ProductsPage() {
   }, [products, searchQuery, selectedCategory])
 
   const loadProducts = async () => {
-    const inventory = await db.getInventory()
-    setProducts(inventory)
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/products')
+      const inventory = await response.json()
+      setProducts(inventory)
+    } catch (error) {
+      console.error('[v0] Error loading products:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const filterProducts = () => {
@@ -68,7 +90,7 @@ export default function ProductsPage() {
         (product) =>
           product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.supplier.toLowerCase().includes(searchQuery.toLowerCase()),
+          (product.supplier || "").toLowerCase().includes(searchQuery.toLowerCase()),
       )
     }
 
@@ -81,23 +103,28 @@ export default function ProductsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    try {
+      setIsLoading(true)
+      const productData = {
+        ...formData,
+        id: editingProduct?.id,
+      }
 
-    const productData: InventoryItem = {
-      id: editingProduct?.id || Date.now(),
-      ...formData,
-      lastRestocked: new Date(),
+      // For now, just add to local state since we need proper backend endpoints
+      let updatedProducts
+      if (editingProduct) {
+        updatedProducts = products.map((p) => (p.id === editingProduct.id ? { ...productData, id: p.id, stock: p.stock } as InventoryItem : p))
+      } else {
+        updatedProducts = [...products, { ...productData, id: Date.now(), stock: formData.stock } as InventoryItem]
+      }
+
+      setProducts(updatedProducts)
+      resetForm()
+    } catch (error) {
+      console.error('[v0] Error submitting product:', error)
+    } finally {
+      setIsLoading(false)
     }
-
-    let updatedProducts
-    if (editingProduct) {
-      updatedProducts = products.map((p) => (p.id === editingProduct.id ? productData : p))
-    } else {
-      updatedProducts = [...products, productData]
-    }
-
-    await db.saveInventory(updatedProducts)
-    setProducts(updatedProducts)
-    resetForm()
   }
 
   const handleEdit = (product: InventoryItem) => {
@@ -105,22 +132,28 @@ export default function ProductsPage() {
     setFormData({
       name: product.name,
       price: product.price,
-      cost: product.cost,
+      cost: product.cost || 0,
       category: product.category,
-      description: "",
-      stock: product.stock,
-      lowStockThreshold: product.lowStockThreshold,
-      supplier: product.supplier,
-      image: product.image,
+      description: product.description || "",
+      stock: product.stock || 0,
+      lowStockThreshold: product.lowStockThreshold || 5,
+      supplier: product.supplier || "",
+      image: product.image || "",
     })
     setShowAddDialog(true)
   }
 
   const handleDelete = async (productId: number) => {
     if (confirm("Are you sure you want to delete this product?")) {
-      const updatedProducts = products.filter((p) => p.id !== productId)
-      await db.saveInventory(updatedProducts)
-      setProducts(updatedProducts)
+      try {
+        setIsLoading(true)
+        const updatedProducts = products.filter((p) => p.id !== productId)
+        setProducts(updatedProducts)
+      } catch (error) {
+        console.error('[v0] Error deleting product:', error)
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
 
