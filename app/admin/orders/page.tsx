@@ -54,7 +54,7 @@ const loadOrders = async () => {
     const ordersWithCustomerInfo: OrderDetails[] = ordersArray.map((order: any) => ({
       ...order,
       id: order.id,
-      receiptNumber: order.id,
+      receiptNumber: String(order.id),
       total: order.total || 0,
       subtotal: order.subtotal || 0,
       tax: order.tax || 0,

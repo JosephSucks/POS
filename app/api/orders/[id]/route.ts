@@ -17,11 +17,12 @@ const sql = neon(getDatabaseUrl())
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const { status } = await request.json()
-    const orderId = params.id
+    const orderId = id
 
     if (!status) {
       return Response.json(
