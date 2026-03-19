@@ -33,7 +33,7 @@ export default function ProductGrid({ category, searchQuery }: ProductGridProps)
   }, [error, allProducts.length])
 
   const filteredProducts = allProducts.filter((product) => {
-    const matchesCategory = category === "all" || product.category === category
+    const matchesCategory = category === "all" || product.category?.toLowerCase() === category.toLowerCase()
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesCategory && matchesSearch
   }).map(product => ({
