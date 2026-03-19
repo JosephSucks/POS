@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Filter, Eye, Printer, RefreshCw, Calendar, DollarSign, Package, MoreHorizontal } from "lucide-react"
+import { Search, Filter, Eye, Printer, RefreshCw, Calendar, DollarSign, Package, MoreHorizontal, CreditCard, Banknote } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -59,9 +59,9 @@ const loadOrders = async () => {
       subtotal: order.subtotal || 0,
       tax: order.tax || 0,
       discount: order.discount || 0,
-      items: [],
+      items: order.items || [],
       timestamp: new Date(order.created_at || Date.now()),
-      customerName: order.customer_name || `Customer ${order.customer_id}`,
+      customerName: order.customer_name || `Customer ${order.customer_id || 'Guest'}`,
       customerEmail: order.customer_email || '',
       paymentMethod: order.payment_method || 'cash',
       status: order.status || 'pending',
@@ -129,8 +129,57 @@ const loadOrders = async () => {
   }
 
   const handlePrintReceipt = (order: OrderDetails) => {
-    // In a real app, this would trigger receipt printing
-    console.log("Printing receipt for order:", order.receiptNumber)
+    // Create a printable receipt window
+    const receiptWindow = window.open('', '_blank', 'width=400,height=600')
+    if (!receiptWindow) {
+      alert('Please allow pop-ups to print receipts')
+      return
+    }
+    
+    const itemsHtml = order.items.map(item => 
+      `<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+        <span>${item.name} × ${item.quantity}</span>
+        <span>$${Number(item.total).toFixed(2)}</span>
+      </div>`
+    ).join('')
+    
+    receiptWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Receipt #${order.receiptNumber}</title>
+        <style>
+          body { font-family: monospace; padding: 20px; max-width: 300px; margin: 0 auto; }
+          h1 { text-align: center; font-size: 18px; margin-bottom: 10px; }
+          .divider { border-top: 1px dashed #000; margin: 10px 0; }
+          .row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+          .bold { font-weight: bold; }
+          .center { text-align: center; }
+          .small { font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <h1>POS Receipt</h1>
+        <p class="center small">Order #${order.receiptNumber}</p>
+        <p class="center small">${formatDate(order.timestamp)}</p>
+        <div class="divider"></div>
+        <p><strong>Customer:</strong> ${order.customerName}</p>
+        <p><strong>Payment:</strong> ${order.paymentMethod}</p>
+        <div class="divider"></div>
+        ${itemsHtml || '<p class="center small">No items</p>'}
+        <div class="divider"></div>
+        <div class="row"><span>Subtotal</span><span>$${Number(order.subtotal).toFixed(2)}</span></div>
+        <div class="row"><span>Tax</span><span>$${Number(order.tax).toFixed(2)}</span></div>
+        ${order.discount > 0 ? `<div class="row"><span>Discount</span><span>-$${Number(order.discount).toFixed(2)}</span></div>` : ''}
+        <div class="divider"></div>
+        <div class="row bold"><span>Total</span><span>$${Number(order.total).toFixed(2)}</span></div>
+        <div class="divider"></div>
+        <p class="center small">Thank you for your purchase!</p>
+        <script>window.print(); window.onafterprint = function() { window.close(); }</script>
+      </body>
+      </html>
+    `)
+    receiptWindow.document.close()
   }
 
   const formatDate = (date: Date) => {
@@ -264,7 +313,14 @@ const loadOrders = async () => {
                     <div key={order.id} className="grid grid-cols-12 gap-4 p-4 hover:bg-muted/50">
                       <div className="col-span-2">
                         <p className="font-medium">#{order.receiptNumber}</p>
-                        <p className="text-xs text-muted-foreground">{order.paymentMethod}</p>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          {order.paymentMethod === 'card' ? (
+                            <CreditCard className="h-3 w-3" />
+                          ) : (
+                            <Banknote className="h-3 w-3" />
+                          )}
+                          <span className="capitalize">{order.paymentMethod}</span>
+                        </div>
                       </div>
                       <div className="col-span-2">
                         <p className="font-medium">{order.customerName}</p>
@@ -283,18 +339,23 @@ const loadOrders = async () => {
                         )}
                       </div>
                       <div className="col-span-2">
-                        <Select value={status} onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {orderStatuses.map((s) => (
-                              <SelectItem key={s.value} value={s.value}>
-                                {s.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        {/* Cash orders with completed status show badge only, card orders show dropdown */}
+                        {order.paymentMethod === 'cash' && status === 'completed' ? (
+                          <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
+                        ) : (
+                          <Select value={status} onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {orderStatuses.map((s) => (
+                                <SelectItem key={s.value} value={s.value}>
+                                  {s.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
                       </div>
                       <div className="col-span-1">
                         <DropdownMenu>
@@ -361,31 +422,47 @@ const loadOrders = async () => {
                 </div>
                 <div>
                   <h3 className="font-medium mb-2">Order Information</h3>
-                  <div className="space-y-1 text-sm">
+                  <div className="space-y-2 text-sm">
                     <p>
                       <span className="font-medium">Date:</span> {formatDate(selectedOrder.timestamp)}
                     </p>
-                    <p>
-                      <span className="font-medium">Payment:</span> {selectedOrder.paymentMethod}
+                    <p className="flex items-center gap-2">
+                      <span className="font-medium">Payment:</span>
+                      {selectedOrder.paymentMethod === 'card' ? (
+                        <span className="flex items-center gap-1">
+                          <CreditCard className="h-4 w-4 text-blue-600" />
+                          Card
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <Banknote className="h-4 w-4 text-green-600" />
+                          Cash
+                        </span>
+                      )}
                     </p>
-                    <p>
-                      <span className="font-medium">Status:</span>{" "}
-                      <Select value={getOrderStatus(selectedOrder)} onValueChange={(newStatus) => {
-                        handleStatusChange(selectedOrder.id, newStatus)
-                        setShowOrderDetails(false)
-                      }}>
-                        <SelectTrigger className="w-32">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {orderStatuses.map((s) => (
-                            <SelectItem key={s.value} value={s.value}>
-                              {s.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">Status:</span>
+                      {/* Cash completed orders show badge only */}
+                      {selectedOrder.paymentMethod === 'cash' && getOrderStatus(selectedOrder) === 'completed' ? (
+                        <Badge className={getStatusBadge('completed').color}>Completed</Badge>
+                      ) : (
+                        <Select value={getOrderStatus(selectedOrder)} onValueChange={(newStatus) => {
+                          handleStatusChange(selectedOrder.id, newStatus)
+                          setShowOrderDetails(false)
+                        }}>
+                          <SelectTrigger className="w-32">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {orderStatuses.map((s) => (
+                              <SelectItem key={s.value} value={s.value}>
+                                {s.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

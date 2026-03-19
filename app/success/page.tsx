@@ -1,31 +1,69 @@
 "use client"
 
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Check, Printer } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Check, Printer, CreditCard, Banknote } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { useCart } from "../context/cart-context"
+import { Badge } from "@/components/ui/badge"
+
+interface OrderItem {
+  name: string
+  quantity: number
+  price: number
+  total: number
+}
 
 export default function SuccessPage() {
   const router = useRouter()
-  const { cart, cartTotal, clearCart } = useCart()
+  const searchParams = useSearchParams()
+  
+  const [orderData, setOrderData] = useState<{
+    orderId: string
+    total: number
+    subtotal: number
+    tax: number
+    discount: number
+    paymentMethod: string
+    items: OrderItem[]
+  } | null>(null)
 
-  const tax = cartTotal * 0.1
-  const grandTotal = cartTotal + tax
-  const receiptNumber = Math.floor(100000 + Math.random() * 900000)
   const date = new Date().toLocaleString()
 
   useEffect(() => {
-    // If there's no cart data, redirect to POS
-    if (cart.length === 0) {
+    const orderId = searchParams.get('orderId')
+    const total = searchParams.get('total')
+    const subtotal = searchParams.get('subtotal')
+    const tax = searchParams.get('tax')
+    const discount = searchParams.get('discount')
+    const paymentMethod = searchParams.get('paymentMethod')
+    const itemsParam = searchParams.get('items')
+    
+    if (!orderId || !total) {
       router.push("/")
+      return
     }
-  }, [cart, router])
+    
+    let items: OrderItem[] = []
+    try {
+      items = itemsParam ? JSON.parse(itemsParam) : []
+    } catch (e) {
+      items = []
+    }
+    
+    setOrderData({
+      orderId,
+      total: parseFloat(total),
+      subtotal: parseFloat(subtotal || '0'),
+      tax: parseFloat(tax || '0'),
+      discount: parseFloat(discount || '0'),
+      paymentMethod: paymentMethod || 'cash',
+      items
+    })
+  }, [searchParams, router])
 
   const handleBackToPOS = () => {
-    clearCart()
     router.push("/")
   }
 
@@ -33,9 +71,14 @@ export default function SuccessPage() {
     window.print()
   }
 
-  if (cart.length === 0) {
-    return null // Will redirect in useEffect
+  if (!orderData) {
+    return null
   }
+  
+  const status = orderData.paymentMethod === 'cash' ? 'completed' : 'pending'
+  const statusConfig = status === 'completed' 
+    ? { label: 'Completed', color: 'bg-green-100 text-green-800' }
+    : { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' }
 
   return (
     <div className="container mx-auto max-w-md py-8">
@@ -50,21 +93,34 @@ export default function SuccessPage() {
         <p className="mb-6 text-center text-muted-foreground">Thank you for your purchase!</p>
 
         <div className="mb-6 text-center">
-          <p className="font-medium">Receipt #{receiptNumber}</p>
+          <p className="font-medium">Order #{orderData.orderId}</p>
           <p className="text-sm text-muted-foreground">{date}</p>
+        </div>
+        
+        {/* Payment Method and Status */}
+        <div className="mb-4 flex items-center justify-center gap-4">
+          <div className="flex items-center gap-2">
+            {orderData.paymentMethod === 'card' ? (
+              <CreditCard className="h-4 w-4 text-blue-600" />
+            ) : (
+              <Banknote className="h-4 w-4 text-green-600" />
+            )}
+            <span className="text-sm font-medium capitalize">{orderData.paymentMethod}</span>
+          </div>
+          <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
         </div>
 
         <Separator className="my-4" />
 
         <div className="space-y-3">
-          {cart.map((item) => (
-            <div key={item.id} className="flex justify-between">
+          {orderData.items.map((item, index) => (
+            <div key={index} className="flex justify-between">
               <div>
                 <p>
                   {item.name} × {item.quantity}
                 </p>
               </div>
-              <p>${(item.price * item.quantity).toFixed(2)}</p>
+              <p>${item.total.toFixed(2)}</p>
             </div>
           ))}
         </div>
@@ -74,15 +130,21 @@ export default function SuccessPage() {
         <div className="space-y-2">
           <div className="flex justify-between">
             <p>Subtotal</p>
-            <p>${cartTotal.toFixed(2)}</p>
+            <p>${orderData.subtotal.toFixed(2)}</p>
           </div>
           <div className="flex justify-between">
             <p>Tax (10%)</p>
-            <p>${tax.toFixed(2)}</p>
+            <p>${orderData.tax.toFixed(2)}</p>
           </div>
+          {orderData.discount > 0 && (
+            <div className="flex justify-between text-green-600">
+              <p>Discount</p>
+              <p>-${orderData.discount.toFixed(2)}</p>
+            </div>
+          )}
           <div className="flex justify-between font-bold">
             <p>Total</p>
-            <p>${grandTotal.toFixed(2)}</p>
+            <p>${orderData.total.toFixed(2)}</p>
           </div>
         </div>
 

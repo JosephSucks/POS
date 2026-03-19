@@ -22,7 +22,9 @@ export async function POST(request: Request) {
 
     console.log('[v0] Saving transaction:', transaction)
 
-    // Create order
+    // Create order - cash payments are completed immediately, card payments need manual processing
+    const initialStatus = transaction.paymentMethod === 'cash' ? 'completed' : 'pending'
+    
     const orderResult = await sql`
       INSERT INTO orders (customer_id, subtotal, discount, tax, total, payment_method, status)
       VALUES (
@@ -32,7 +34,7 @@ export async function POST(request: Request) {
         ${transaction.tax},
         ${transaction.total},
         ${transaction.paymentMethod},
-        'completed'
+        ${initialStatus}
       )
       RETURNING id
     `

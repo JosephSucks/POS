@@ -47,9 +47,27 @@ export default function CheckoutPage() {
         throw new Error('Failed to process payment')
       }
 
+      const result = await response.json()
+      
+      // Redirect to success page with order info
+      const successParams = new URLSearchParams({
+        orderId: result.orderId.toString(),
+        total: grandTotal.toFixed(2),
+        subtotal: cartTotal.toFixed(2),
+        tax: tax.toFixed(2),
+        discount: discountAmount.toFixed(2),
+        paymentMethod: paymentMethod,
+        items: JSON.stringify(cart.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.price * item.quantity
+        })))
+      })
+      
       // Clear cart and redirect
       clearCart()
-      router.push("/success")
+      router.push(`/success?${successParams.toString()}`)
     } catch (error) {
       console.error('[v0] Checkout error:', error)
       alert('Failed to process payment. Please try again.')
