@@ -22,23 +22,41 @@ export async function PUT(
   try {
     const params = await props.params
     const orderId = params.id
-    const { status } = await request.json()
+    const body = await request.json()
+    const { status, subtotal, tax, discount, total } = body
 
-    if (!status) {
+    console.log(`[v0] Updating order ${orderId}:`, body)
+
+    // Build dynamic update based on what fields are provided
+    let result
+    
+    if (status !== undefined && subtotal === undefined) {
+      // Status-only update
+      result = await sql`
+        UPDATE orders 
+        SET status = ${status}, updated_at = NOW()
+        WHERE id = ${parseInt(orderId)}
+        RETURNING id, status, subtotal, tax, discount, total, updated_at
+      `
+    } else if (subtotal !== undefined) {
+      // Full order edit (billing correction)
+      result = await sql`
+        UPDATE orders 
+        SET 
+          subtotal = ${subtotal},
+          tax = ${tax},
+          discount = ${discount},
+          total = ${total},
+          updated_at = NOW()
+        WHERE id = ${parseInt(orderId)}
+        RETURNING id, status, subtotal, tax, discount, total, updated_at
+      `
+    } else {
       return Response.json(
-        { error: 'Status is required' },
+        { error: 'No update fields provided' },
         { status: 400 }
       )
     }
-
-    console.log(`[v0] Updating order ${orderId} status to ${status}`)
-
-    const result = await sql`
-      UPDATE orders 
-      SET status = ${status}, updated_at = NOW()
-      WHERE id = ${parseInt(orderId)}
-      RETURNING id, status, updated_at
-    `
 
     if (result.length === 0) {
       return Response.json(
@@ -47,14 +65,14 @@ export async function PUT(
       )
     }
 
-    console.log('[v0] Order status updated successfully:', result[0])
+    console.log('[v0] Order updated successfully:', result[0])
 
     return Response.json(result[0], { status: 200 })
   } catch (error) {
-    console.error('[v0] Error updating order status:', error)
+    console.error('[v0] Error updating order:', error)
     return Response.json(
       { 
-        error: 'Failed to update order status',
+        error: 'Failed to update order',
         details: error instanceof Error ? error.message : 'Unknown error'
       }, 
       { status: 500 }

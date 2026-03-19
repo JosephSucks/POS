@@ -56,6 +56,17 @@ export async function POST(request: Request) {
       `
     }
 
+    // Update customer total_spent if customer exists
+    if (transaction.customerId) {
+      await sql`
+        UPDATE customers 
+        SET total_spent = total_spent + ${transaction.total},
+            updated_at = NOW()
+        WHERE id = ${transaction.customerId}
+      `
+      console.log('[v0] Updated customer spending for customer:', transaction.customerId)
+    }
+
     console.log('[v0] Transaction saved with order ID:', orderId)
 
     return Response.json({ success: true, orderId }, { status: 200 })

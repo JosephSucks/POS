@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Filter, Eye, Printer, RefreshCw, Calendar, DollarSign, Package, MoreHorizontal, CreditCard, Banknote } from "lucide-react"
+import { Search, Filter, Eye, Printer, RefreshCw, Calendar, DollarSign, Package, MoreHorizontal, CreditCard, Banknote, Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -32,6 +32,13 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null)
   const [showOrderDetails, setShowOrderDetails] = useState(false)
+  const [showEditOrder, setShowEditOrder] = useState(false)
+  const [editFormData, setEditFormData] = useState({
+    subtotal: 0,
+    tax: 0,
+    discount: 0,
+    total: 0,
+  })
 
   useEffect(() => {
     loadOrders()
@@ -126,6 +133,50 @@ const loadOrders = async () => {
   const handleViewOrder = (order: OrderDetails) => {
     setSelectedOrder(order)
     setShowOrderDetails(true)
+  }
+
+  const handleEditOrder = (order: OrderDetails) => {
+    setSelectedOrder(order)
+    setEditFormData({
+      subtotal: Number(order.subtotal) || 0,
+      tax: Number(order.tax) || 0,
+      discount: Number(order.discount) || 0,
+      total: Number(order.total) || 0,
+    })
+    setShowEditOrder(true)
+  }
+
+  const handleSaveOrderEdit = async () => {
+    if (!selectedOrder) return
+    
+    try {
+      const response = await fetch(`/api/orders/${selectedOrder.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subtotal: editFormData.subtotal,
+          tax: editFormData.tax,
+          discount: editFormData.discount,
+          total: editFormData.total,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update order')
+      }
+
+      await loadOrders()
+      setShowEditOrder(false)
+      alert('Order updated successfully!')
+    } catch (error) {
+      console.error('[v0] Error updating order:', error)
+      alert('Failed to update order')
+    }
+  }
+
+  const recalculateTotal = () => {
+    const newTotal = editFormData.subtotal + editFormData.tax - editFormData.discount
+    setEditFormData(prev => ({ ...prev, total: Math.max(0, newTotal) }))
   }
 
   const handlePrintReceipt = (order: OrderDetails) => {
@@ -339,23 +390,19 @@ const loadOrders = async () => {
                         )}
                       </div>
                       <div className="col-span-2">
-                        {/* Cash orders with completed status show badge only, card orders show dropdown */}
-                        {order.paymentMethod === 'cash' && status === 'completed' ? (
-                          <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
-                        ) : (
-                          <Select value={status} onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {orderStatuses.map((s) => (
-                                <SelectItem key={s.value} value={s.value}>
-                                  {s.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
+                        {/* All orders show color-coded badge that opens dropdown on click */}
+                        <Select value={status} onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}>
+                          <SelectTrigger className={`w-full border-0 ${statusConfig.color}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {orderStatuses.map((s) => (
+                              <SelectItem key={s.value} value={s.value}>
+                                <span className={`px-2 py-1 rounded ${s.color}`}>{s.label}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="col-span-1">
                         <DropdownMenu>
@@ -368,6 +415,10 @@ const loadOrders = async () => {
                             <DropdownMenuItem onClick={() => handleViewOrder(order)}>
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditOrder(order)}>
+                              <Pencil className="h-4 w-4 mr-2" />
+                              Edit Order
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handlePrintReceipt(order)}>
                               <Printer className="h-4 w-4 mr-2" />
@@ -442,26 +493,22 @@ const loadOrders = async () => {
                     </p>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">Status:</span>
-                      {/* Cash completed orders show badge only */}
-                      {selectedOrder.paymentMethod === 'cash' && getOrderStatus(selectedOrder) === 'completed' ? (
-                        <Badge className={getStatusBadge('completed').color}>Completed</Badge>
-                      ) : (
-                        <Select value={getOrderStatus(selectedOrder)} onValueChange={(newStatus) => {
-                          handleStatusChange(selectedOrder.id, newStatus)
-                          setShowOrderDetails(false)
-                        }}>
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {orderStatuses.map((s) => (
-                              <SelectItem key={s.value} value={s.value}>
-                                {s.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
+                      <Select value={getOrderStatus(selectedOrder)} onValueChange={(newStatus) => {
+                        handleStatusChange(selectedOrder.id, newStatus)
+                        // Update local state to reflect change
+                        setSelectedOrder({ ...selectedOrder, status: newStatus })
+                      }}>
+                        <SelectTrigger className={`w-36 ${getStatusBadge(getOrderStatus(selectedOrder)).color}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {orderStatuses.map((s) => (
+                            <SelectItem key={s.value} value={s.value}>
+                              <span className={`px-2 py-1 rounded ${s.color}`}>{s.label}</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </div>
@@ -521,8 +568,95 @@ const loadOrders = async () => {
                   <Printer className="h-4 w-4 mr-2" />
                   Print Receipt
                 </Button>
+                <Button variant="outline" onClick={() => {
+                  setShowOrderDetails(false)
+                  handleEditOrder(selectedOrder)
+                }}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit Order
+                </Button>
                 <Button variant="outline" onClick={() => setShowOrderDetails(false)}>
                   Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Order Modal */}
+      <Dialog open={showEditOrder} onOpenChange={setShowEditOrder}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Order #{selectedOrder?.receiptNumber}</DialogTitle>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Adjust the order amounts if there was a billing error. Changes will be saved to the database.
+              </p>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium">Subtotal</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={editFormData.subtotal}
+                    onChange={(e) => {
+                      setEditFormData(prev => ({ ...prev, subtotal: parseFloat(e.target.value) || 0 }))
+                    }}
+                    onBlur={recalculateTotal}
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Tax</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={editFormData.tax}
+                    onChange={(e) => {
+                      setEditFormData(prev => ({ ...prev, tax: parseFloat(e.target.value) || 0 }))
+                    }}
+                    onBlur={recalculateTotal}
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Discount</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={editFormData.discount}
+                    onChange={(e) => {
+                      setEditFormData(prev => ({ ...prev, discount: parseFloat(e.target.value) || 0 }))
+                    }}
+                    onBlur={recalculateTotal}
+                  />
+                </div>
+                
+                <Separator />
+                
+                <div>
+                  <label className="text-sm font-medium">Total</label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={editFormData.total}
+                    onChange={(e) => {
+                      setEditFormData(prev => ({ ...prev, total: parseFloat(e.target.value) || 0 }))
+                    }}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button onClick={handleSaveOrderEdit} className="flex-1">
+                  Save Changes
+                </Button>
+                <Button variant="outline" onClick={() => setShowEditOrder(false)}>
+                  Cancel
                 </Button>
               </div>
             </div>
