@@ -108,7 +108,6 @@ export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
   }
 
   const handleSelectCustomer = (selectedCustomer: Customer) => {
-    console.log('[v0] Selected customer:', selectedCustomer)
     setCustomer(selectedCustomer)
     onClose()
   }

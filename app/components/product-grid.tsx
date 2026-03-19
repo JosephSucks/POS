@@ -27,10 +27,7 @@ export default function ProductGrid({ category, searchQuery }: ProductGridProps)
     dedupingInterval: 60000,
   })
 
-  useEffect(() => {
-    if (error) console.error('[v0] Product fetch error:', error)
-    if (allProducts.length > 0) console.log('[v0] Products loaded:', allProducts.length)
-  }, [error, allProducts.length])
+
 
   const filteredProducts = allProducts.filter((product) => {
     const productCategory = product.category?.toLowerCase() || ''

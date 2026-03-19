@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, CreditCard, Wallet } from "lucide-react"
+import { ArrowLeft, CreditCard, Wallet, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -13,14 +13,20 @@ import { useCart } from "../context/cart-context"
 export default function CheckoutPage() {
   const router = useRouter()
   const { cart, cartTotal, clearCart, customer, discountAmount } = useCart()
-  const [paymentMethod, setPaymentMethod] = useState("card")
+  const [paymentMethod, setPaymentMethod] = useState("cash")
+  const [isLoading, setIsLoading] = useState(true)
+  
+  // Wait for cart to hydrate before rendering
+  useEffect(() => {
+    setIsLoading(false)
+  }, [])
 
   const tax = cartTotal * 0.1
   const grandTotal = cartTotal - discountAmount + tax
 
   const handlePayment = async () => {
     try {
-      console.log('[v0] Customer at checkout:', customer)
+
       const transaction = {
         customerId: customer?.id || null,
         items: cart.map((item) => ({
@@ -75,9 +81,18 @@ export default function CheckoutPage() {
     }
   }
 
+  // Show loading while cart hydrates
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
   if (cart.length === 0) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center">
           <h1 className="text-2xl font-bold">Your cart is empty</h1>
           <p className="mt-2 text-muted-foreground">Add some items to your cart before checkout</p>
@@ -101,7 +116,7 @@ export default function CheckoutPage() {
       <div className="grid gap-8 md:grid-cols-2">
         <div>
           <h2 className="mb-4 text-xl font-semibold">Order Summary</h2>
-          <div className="rounded-lg border p-4 bg-white">
+          <div className="rounded-lg border p-4 bg-card">
             {cart.map((item) => (
               <div key={item.id} className="mb-3 flex justify-between">
                 <div>
@@ -139,7 +154,7 @@ export default function CheckoutPage() {
 
         <div>
           <h2 className="mb-4 text-xl font-semibold">Payment Method</h2>
-          <div className="rounded-lg border p-4 bg-white">
+          <div className="rounded-lg border p-4 bg-card">
             <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
               <div className="flex items-center space-x-2 rounded-md border p-3">
                 <RadioGroupItem value="card" id="card" />

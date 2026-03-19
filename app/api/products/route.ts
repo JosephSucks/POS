@@ -64,20 +64,22 @@ export async function POST(request: Request) {
       )
     }
 
-    console.log('[v0] Creating product:', { name, price, category_id, categoryType: typeof category_id })
-
-    // If category_id is a string (category name), look up the actual ID
-    let resolvedCategoryId = null
-    if (category_id) {
-      if (typeof category_id === 'string' && isNaN(Number(category_id))) {
-        // It's a category name, look up the ID
+    // Resolve category_id - it may be a string name like "food" or an integer ID
+    let resolvedCategoryId: number | null = null
+    
+    if (category_id !== null && category_id !== undefined && category_id !== '') {
+      // Check if it's already a number
+      const numericId = Number(category_id)
+      if (!isNaN(numericId) && Number.isInteger(numericId)) {
+        resolvedCategoryId = numericId
+      } else if (typeof category_id === 'string') {
+        // It's a category name string, look up the actual ID from the database
         const categoryResult = await sql`
           SELECT id FROM categories WHERE LOWER(name) = LOWER(${category_id})
         `
-        resolvedCategoryId = categoryResult[0]?.id || null
-        console.log('[v0] Resolved category name to ID:', { name: category_id, id: resolvedCategoryId })
-      } else {
-        resolvedCategoryId = Number(category_id)
+        if (categoryResult.length > 0) {
+          resolvedCategoryId = categoryResult[0].id
+        }
       }
     }
 

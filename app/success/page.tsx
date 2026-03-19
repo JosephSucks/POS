@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Check, Printer, CreditCard, Banknote } from "lucide-react"
+import { Check, Printer, CreditCard, Banknote, Loader2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -15,7 +15,7 @@ interface OrderItem {
   total: number
 }
 
-export default function SuccessPage() {
+function SuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -81,8 +81,9 @@ export default function SuccessPage() {
     : { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' }
 
   return (
-    <div className="container mx-auto max-w-md py-8">
-      <div className="rounded-lg border p-6 print:border-none bg-white">
+    <div className="min-h-screen bg-background py-8">
+      <div className="container mx-auto max-w-md">
+      <div className="rounded-lg border p-6 print:border-none bg-card">
         <div className="mb-6 flex items-center justify-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
             <Check className="h-6 w-6 text-green-600" />
@@ -158,6 +159,19 @@ export default function SuccessPage() {
           </Button>
         </div>
       </div>
+      </div>
     </div>
+  )
+}
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <SuccessContent />
+    </Suspense>
   )
 }

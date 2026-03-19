@@ -28,6 +28,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useTheme } from "@/app/components/theme-provider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
@@ -110,6 +111,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   const [showPin, setShowPin] = useState(false)
+  const { theme, setTheme } = useTheme()
 
   useEffect(() => {
     // Load settings from localStorage
@@ -124,13 +126,13 @@ export default function SettingsPage() {
   }, [])
 
   useEffect(() => {
-    // Apply dark mode
-    if (settings.darkMode) {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
+    // Sync dark mode with theme provider
+    if (settings.darkMode && theme !== 'dark') {
+      setTheme('dark')
+    } else if (!settings.darkMode && theme !== 'light') {
+      setTheme('light')
     }
-  }, [settings.darkMode])
+  }, [settings.darkMode, theme, setTheme])
 
   const updateSetting = <K extends keyof Settings>(key: K, value: Settings[K]) => {
     setSettings(prev => ({ ...prev, [key]: value }))
@@ -512,7 +514,10 @@ export default function SettingsPage() {
                 </div>
                 <Switch
                   checked={settings.darkMode}
-                  onCheckedChange={(checked) => updateSetting('darkMode', checked)}
+                  onCheckedChange={(checked) => {
+                    updateSetting('darkMode', checked)
+                    setTheme(checked ? 'dark' : 'light')
+                  }}
                 />
               </div>
               <Separator />
