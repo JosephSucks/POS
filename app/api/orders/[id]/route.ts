@@ -17,12 +17,11 @@ const sql = neon(getDatabaseUrl())
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Await params before accessing properties (Next.js 15+ requirement)
-    const resolvedParams = await params
-    const orderId = resolvedParams.id
+    const params = await props.params
+    const orderId = params.id
     const { status } = await request.json()
 
     if (!status) {
@@ -56,6 +55,43 @@ export async function PUT(
     return Response.json(
       { 
         error: 'Failed to update order status',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, 
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  props: { params: Promise<{ id: string }> }
+) {
+  try {
+    const params = await props.params
+    const orderId = params.id
+
+    console.log(`[v0] Deleting order ${orderId}`)
+
+    const result = await sql`
+      DELETE FROM orders 
+      WHERE id = ${parseInt(orderId)}
+      RETURNING id
+    `
+
+    if (result.length === 0) {
+      return Response.json(
+        { error: 'Order not found' },
+        { status: 404 }
+      )
+    }
+
+    console.log('[v0] Order deleted successfully')
+    return Response.json({ success: true }, { status: 200 })
+  } catch (error) {
+    console.error('[v0] Error deleting order:', error)
+    return Response.json(
+      { 
+        error: 'Failed to delete order',
         details: error instanceof Error ? error.message : 'Unknown error'
       }, 
       { status: 500 }
