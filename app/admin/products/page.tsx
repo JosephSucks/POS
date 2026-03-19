@@ -25,6 +25,17 @@ interface ProductFormData {
   supplier: string
   image: string
 }
+interface InventoryItem {
+  id: number
+  name: string
+  price: number
+  cost: number
+  category: string
+  stock: number
+  lowStockThreshold: number
+  supplier: string
+  image: string
+}
 
 const categories = ["food", "drinks", "desserts", "snacks", "beverages"]
 
@@ -56,8 +67,23 @@ export default function ProductsPage() {
   }, [products, searchQuery, selectedCategory])
 
   const loadProducts = async () => {
-    const inventory = await db.getInventory()
-    setProducts(inventory)
+    try {
+      const res = await fetch("/api/products")
+      const data = await res.json()
+
+      console.log("Products API:", data)
+
+      // ALWAYS ensure it's an array
+      if (Array.isArray(data)) {
+        setProducts(data)
+      } else {
+        console.error("API did not return array:", data)
+        setProducts([]) // fallback
+      }
+    } catch (error) {
+      console.error("Error loading products:", error)
+      setProducts([])
+    }
   }
 
   const filterProducts = () => {
@@ -95,8 +121,16 @@ export default function ProductsPage() {
       updatedProducts = [...products, productData]
     }
 
-    await db.saveInventory(updatedProducts)
-    setProducts(updatedProducts)
+    await fetch("/api/products", {
+      method: editingProduct ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: editingProduct?.id,
+        ...formData,
+      }),
+    })
+
+    await loadProducts()
     resetForm()
   }
 
@@ -119,7 +153,11 @@ export default function ProductsPage() {
   const handleDelete = async (productId: number) => {
     if (confirm("Are you sure you want to delete this product?")) {
       const updatedProducts = products.filter((p) => p.id !== productId)
-      await db.saveInventory(updatedProducts)
+      await fetch(`/api/products?id=${productId}`, {
+        method: "DELETE",
+      })
+
+      await loadProducts()
       setProducts(updatedProducts)
     }
   }
