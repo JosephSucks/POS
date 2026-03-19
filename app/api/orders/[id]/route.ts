@@ -21,9 +21,9 @@ export async function PUT(
 ) {
   try {
     // Await params before accessing properties (Next.js 15+ requirement)
-    const { id } = await params
+    const resolvedParams = await params
+    const orderId = resolvedParams.id
     const { status } = await request.json()
-    const orderId = id
 
     if (!status) {
       return Response.json(
