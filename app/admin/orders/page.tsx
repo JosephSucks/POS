@@ -277,9 +277,9 @@ const loadOrders = async () => {
                         <p className="text-sm">{order.items.length}</p>
                       </div>
                       <div className="col-span-2">
-                        <p className="font-medium">${order.total.toFixed(2)}</p>
+                        <p className="font-medium">${Number(order.total).toFixed(2)}</p>
                         {order.discount > 0 && (
-                          <p className="text-xs text-green-600">-${order.discount.toFixed(2)} discount</p>
+                          <p className="text-xs text-green-600">-${Number(order.discount).toFixed(2)} discount</p>
                         )}
                       </div>
                       <div className="col-span-2">
@@ -401,10 +401,10 @@ const loadOrders = async () => {
                       <div>
                         <p className="font-medium">{item.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          ${item.price.toFixed(2)} × {item.quantity}
+                          ${Number(item.price).toFixed(2)} × {item.quantity}
                         </p>
                       </div>
-                      <p className="font-medium">${item.total.toFixed(2)}</p>
+                      <p className="font-medium">${Number(item.total).toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
@@ -418,22 +418,22 @@ const loadOrders = async () => {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>${selectedOrder.subtotal.toFixed(2)}</span>
+                    <span>${Number(selectedOrder.subtotal).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Tax</span>
-                    <span>${selectedOrder.tax.toFixed(2)}</span>
+                    <span>${Number(selectedOrder.tax).toFixed(2)}</span>
                   </div>
                   {selectedOrder.discount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Discount</span>
-                      <span>-${selectedOrder.discount.toFixed(2)}</span>
+                      <span>-${Number(selectedOrder.discount).toFixed(2)}</span>
                     </div>
                   )}
                   <Separator />
                   <div className="flex justify-between font-medium text-lg">
                     <span>Total</span>
-                    <span>${selectedOrder.total.toFixed(2)}</span>
+                    <span>${Number(selectedOrder.total).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
