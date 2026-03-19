@@ -20,8 +20,8 @@ interface InventoryItem {
   price: number
   image: string
   category: string
-  stock: number
-  lowStockThreshold: number
+  stock?: number
+  lowStockThreshold?: number
   cost?: number
   supplier?: string
   description?: string
@@ -375,9 +375,11 @@ export default function ProductsPage() {
               <div className="space-y-2">
                 <div className="flex items-start justify-between">
                   <h3 className="font-medium line-clamp-1">{product.name}</h3>
-                  <Badge variant={product.stock <= product.lowStockThreshold ? "destructive" : "secondary"}>
-                    {product.stock}
-                  </Badge>
+                  {product.stock !== undefined && (
+                    <Badge variant={product.stock <= (product.lowStockThreshold || 5) ? "destructive" : "secondary"}>
+                      {product.stock}
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-sm text-muted-foreground capitalize">{product.category}</p>
                 <div className="flex items-center justify-between">
