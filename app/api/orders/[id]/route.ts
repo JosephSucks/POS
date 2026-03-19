@@ -17,13 +17,14 @@ const sql = neon(getDatabaseUrl())
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
+  // First await params (Next.js 15+ async params requirement)
+  const { id } = await context.params
+  
   try {
-    // Await params before accessing properties (Next.js 15+ requirement)
-    const resolvedParams = await params
-    const orderId = resolvedParams.id
-    const { status } = await request.json()
+    const body = await request.json()
+    const { status } = body
 
     if (!status) {
       return Response.json(
@@ -32,12 +33,10 @@ export async function PUT(
       )
     }
 
-    console.log(`[v0] Updating order ${orderId} status to ${status}`)
-
     const result = await sql`
       UPDATE orders 
       SET status = ${status}, updated_at = NOW()
-      WHERE id = ${parseInt(orderId)}
+      WHERE id = ${parseInt(id)}
       RETURNING id, status, updated_at
     `
 
@@ -48,11 +47,9 @@ export async function PUT(
       )
     }
 
-    console.log('[v0] Order status updated successfully:', result[0])
-
     return Response.json(result[0], { status: 200 })
   } catch (error) {
-    console.error('[v0] Error updating order status:', error)
+    console.error('Error updating order status:', error)
     return Response.json(
       { 
         error: 'Failed to update order status',
