@@ -58,6 +58,25 @@ export async function GET(request: Request) {
       SELECT COUNT(*) as count FROM customers
     `
 
+    // Get guest vs customer spending
+    const guestSpending = await sql`
+      SELECT 
+        COALESCE(SUM(total), 0) as guest_revenue,
+        COUNT(*) as guest_orders
+      FROM orders
+      WHERE customer_id IS NULL
+        AND created_at >= ${currentPeriodStart.toISOString()}
+    `
+
+    const customerSpending = await sql`
+      SELECT 
+        COALESCE(SUM(total), 0) as customer_revenue,
+        COUNT(*) as customer_orders
+      FROM orders
+      WHERE customer_id IS NOT NULL
+        AND created_at >= ${currentPeriodStart.toISOString()}
+    `
+
     // Get top products
     const topProducts = await sql`
       SELECT 
@@ -159,7 +178,17 @@ export async function GET(request: Request) {
         { segment: 'New Customers', count: Math.floor((Number(customerCount[0]?.count) || 0) * 0.3), percentage: 30, revenue: currentRevenue * 0.2 },
         { segment: 'Regular Customers', count: Math.floor((Number(customerCount[0]?.count) || 0) * 0.5), percentage: 50, revenue: currentRevenue * 0.6 },
         { segment: 'VIP Customers', count: Math.floor((Number(customerCount[0]?.count) || 0) * 0.2), percentage: 20, revenue: currentRevenue * 0.2 },
-      ]
+      ],
+      spendingBreakdown: {
+        guest: {
+          revenue: Number(guestSpending[0]?.guest_revenue) || 0,
+          orders: Number(guestSpending[0]?.guest_orders) || 0
+        },
+        registered: {
+          revenue: Number(customerSpending[0]?.customer_revenue) || 0,
+          orders: Number(customerSpending[0]?.customer_orders) || 0
+        }
+      }
     }
 
     console.log('[v0] Analytics fetched successfully')

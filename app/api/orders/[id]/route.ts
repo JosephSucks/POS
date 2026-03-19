@@ -22,39 +22,67 @@ export async function PUT(
   try {
     const params = await props.params
     const orderId = params.id
-    const { status } = await request.json()
+    const body = await request.json()
+    const { status, subtotal, tax, discount, total, items } = body
 
-    if (!status) {
-      return Response.json(
-        { error: 'Status is required' },
-        { status: 400 }
-      )
+    console.log(`[v0] Updating order ${orderId}`, body)
+
+    // If only status is provided, just update the status
+    if (status && !subtotal && !items) {
+      const result = await sql`
+        UPDATE orders 
+        SET status = ${status}, updated_at = NOW()
+        WHERE id = ${parseInt(orderId)}
+        RETURNING id, status, updated_at
+      `
+
+      if (result.length === 0) {
+        return Response.json({ error: 'Order not found' }, { status: 404 })
+      }
+
+      console.log('[v0] Order status updated successfully:', result[0])
+      return Response.json(result[0], { status: 200 })
     }
 
-    console.log(`[v0] Updating order ${orderId} status to ${status}`)
-
+    // Full order update (for billing corrections)
     const result = await sql`
       UPDATE orders 
-      SET status = ${status}, updated_at = NOW()
+      SET 
+        subtotal = COALESCE(${subtotal}, subtotal),
+        tax = COALESCE(${tax}, tax),
+        discount = COALESCE(${discount}, discount),
+        total = COALESCE(${total}, total),
+        status = COALESCE(${status}, status),
+        updated_at = NOW()
       WHERE id = ${parseInt(orderId)}
-      RETURNING id, status, updated_at
+      RETURNING id, status, subtotal, tax, discount, total, updated_at
     `
 
     if (result.length === 0) {
-      return Response.json(
-        { error: 'Order not found' },
-        { status: 404 }
-      )
+      return Response.json({ error: 'Order not found' }, { status: 404 })
     }
 
-    console.log('[v0] Order status updated successfully:', result[0])
+    // Update order items if provided
+    if (items && Array.isArray(items)) {
+      // Delete existing items
+      await sql`DELETE FROM order_items WHERE order_id = ${parseInt(orderId)}`
+      
+      // Insert new items
+      for (const item of items) {
+        await sql`
+          INSERT INTO order_items (order_id, product_id, quantity, unit_price, subtotal)
+          VALUES (${parseInt(orderId)}, ${item.id || item.product_id}, ${item.quantity}, ${item.price}, ${item.total})
+        `
+      }
+    }
 
+    console.log('[v0] Order updated successfully:', result[0])
     return Response.json(result[0], { status: 200 })
   } catch (error) {
-    console.error('[v0] Error updating order status:', error)
+    console.error('[v0] Error updating order:', error)
     return Response.json(
       { 
-        error: 'Failed to update order status',
+        error: 'Failed to update order',
         details: error instanceof Error ? error.message : 'Unknown error'
       }, 
       { status: 500 }

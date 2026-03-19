@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Filter, Eye, Printer, RefreshCw, Calendar, DollarSign, Package, MoreHorizontal, CreditCard, Banknote } from "lucide-react"
+import { Search, Filter, Eye, Printer, RefreshCw, Calendar, DollarSign, Package, MoreHorizontal, CreditCard, Banknote, Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { db, type Transaction } from "../../services/database"
@@ -19,11 +20,11 @@ interface OrderDetails extends Transaction {
 }
 
 const orderStatuses = [
-  { value: "pending", label: "Pending", color: "bg-yellow-100 text-yellow-800" },
-  { value: "processing", label: "Processing", color: "bg-blue-100 text-blue-800" },
-  { value: "completed", label: "Completed", color: "bg-green-100 text-green-800" },
-  { value: "cancelled", label: "Cancelled", color: "bg-red-100 text-red-800" },
-  { value: "refunded", label: "Refunded", color: "bg-gray-100 text-gray-800" },
+  { value: "pending", label: "Pending", color: "bg-orange-100 text-orange-800 border-orange-200" },
+  { value: "processing", label: "Processing", color: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "completed", label: "Completed", color: "bg-green-100 text-green-800 border-green-200" },
+  { value: "cancelled", label: "Cancelled", color: "bg-red-100 text-red-800 border-red-200" },
+  { value: "refunded", label: "Refunded", color: "bg-purple-100 text-purple-800 border-purple-200" },
 ]
 export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderDetails[]>([])
@@ -32,6 +33,15 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null)
   const [showOrderDetails, setShowOrderDetails] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingOrder, setEditingOrder] = useState<OrderDetails | null>(null)
+  const [editFormData, setEditFormData] = useState({
+    subtotal: 0,
+    tax: 0,
+    discount: 0,
+    total: 0,
+    items: [] as Array<{ id: number; name: string; quantity: number; price: number; total: number }>
+  })
 
   useEffect(() => {
     loadOrders()
@@ -126,6 +136,128 @@ const loadOrders = async () => {
   const handleViewOrder = (order: OrderDetails) => {
     setSelectedOrder(order)
     setShowOrderDetails(true)
+  }
+
+  const handleEditOrder = (order: OrderDetails) => {
+    setEditingOrder(order)
+    setEditFormData({
+      subtotal: Number(order.subtotal) || 0,
+      tax: Number(order.tax) || 0,
+      discount: Number(order.discount) || 0,
+      total: Number(order.total) || 0,
+      items: order.items.map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        price: Number(item.price),
+        total: Number(item.total)
+      }))
+    })
+    setShowEditModal(true)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingOrder) return
+    
+    try {
+      const response = await fetch(`/api/orders/${editingOrder.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subtotal: editFormData.subtotal,
+          tax: editFormData.tax,
+          discount: editFormData.discount,
+          total: editFormData.total,
+          items: editFormData.items
+        }),
+      })
+
+      if (!response.ok) throw new Error('Failed to update order')
+      
+      await loadOrders()
+      setShowEditModal(false)
+      setEditingOrder(null)
+    } catch (error) {
+      console.error('[v0] Error updating order:', error)
+      alert('Failed to update order')
+    }
+  }
+
+  const handleDeleteOrder = async (orderId: number) => {
+    if (!confirm("Are you sure you want to delete this order? This action cannot be undone.")) return
+    
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) throw new Error('Failed to delete order')
+      
+      await loadOrders()
+    } catch (error) {
+      console.error('[v0] Error deleting order:', error)
+      alert('Failed to delete order')
+    }
+  }
+
+  const updateItemQuantity = (index: number, newQuantity: number) => {
+    const newItems = [...editFormData.items]
+    newItems[index].quantity = newQuantity
+    newItems[index].total = newItems[index].price * newQuantity
+    
+    const newSubtotal = newItems.reduce((sum, item) => sum + item.total, 0)
+    const newTax = newSubtotal * 0.1
+    const newTotal = newSubtotal + newTax - editFormData.discount
+    
+    setEditFormData({
+      ...editFormData,
+      items: newItems,
+      subtotal: newSubtotal,
+      tax: newTax,
+      total: newTotal
+    })
+  }
+
+  const updateItemPrice = (index: number, newPrice: number) => {
+    const newItems = [...editFormData.items]
+    newItems[index].price = newPrice
+    newItems[index].total = newPrice * newItems[index].quantity
+    
+    const newSubtotal = newItems.reduce((sum, item) => sum + item.total, 0)
+    const newTax = newSubtotal * 0.1
+    const newTotal = newSubtotal + newTax - editFormData.discount
+    
+    setEditFormData({
+      ...editFormData,
+      items: newItems,
+      subtotal: newSubtotal,
+      tax: newTax,
+      total: newTotal
+    })
+  }
+
+  const removeItem = (index: number) => {
+    const newItems = editFormData.items.filter((_, i) => i !== index)
+    const newSubtotal = newItems.reduce((sum, item) => sum + item.total, 0)
+    const newTax = newSubtotal * 0.1
+    const newTotal = newSubtotal + newTax - editFormData.discount
+    
+    setEditFormData({
+      ...editFormData,
+      items: newItems,
+      subtotal: newSubtotal,
+      tax: newTax,
+      total: newTotal
+    })
+  }
+
+  const updateDiscount = (newDiscount: number) => {
+    const newTotal = editFormData.subtotal + editFormData.tax - newDiscount
+    setEditFormData({
+      ...editFormData,
+      discount: newDiscount,
+      total: newTotal
+    })
   }
 
   const handlePrintReceipt = (order: OrderDetails) => {
@@ -339,23 +471,19 @@ const loadOrders = async () => {
                         )}
                       </div>
                       <div className="col-span-2">
-                        {/* Cash orders with completed status show badge only, card orders show dropdown */}
-                        {order.paymentMethod === 'cash' && status === 'completed' ? (
-                          <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
-                        ) : (
-                          <Select value={status} onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {orderStatuses.map((s) => (
-                                <SelectItem key={s.value} value={s.value}>
-                                  {s.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
+                        {/* All orders can have status changed with color-coded dropdown */}
+                        <Select value={status} onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}>
+                          <SelectTrigger className={`w-full border ${statusConfig.color}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {orderStatuses.map((s) => (
+                              <SelectItem key={s.value} value={s.value}>
+                                <span className={`px-2 py-0.5 rounded text-sm ${s.color}`}>{s.label}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="col-span-1">
                         <DropdownMenu>
@@ -369,9 +497,17 @@ const loadOrders = async () => {
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditOrder(order)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit Order
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handlePrintReceipt(order)}>
                               <Printer className="h-4 w-4 mr-2" />
                               Print Receipt
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDeleteOrder(order.id)} className="text-destructive">
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Order
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -442,26 +578,20 @@ const loadOrders = async () => {
                     </p>
                     <div className="flex items-center gap-2">
                       <span className="font-medium">Status:</span>
-                      {/* Cash completed orders show badge only */}
-                      {selectedOrder.paymentMethod === 'cash' && getOrderStatus(selectedOrder) === 'completed' ? (
-                        <Badge className={getStatusBadge('completed').color}>Completed</Badge>
-                      ) : (
-                        <Select value={getOrderStatus(selectedOrder)} onValueChange={(newStatus) => {
-                          handleStatusChange(selectedOrder.id, newStatus)
-                          setShowOrderDetails(false)
-                        }}>
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {orderStatuses.map((s) => (
-                              <SelectItem key={s.value} value={s.value}>
-                                {s.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
+                      <Select value={getOrderStatus(selectedOrder)} onValueChange={(newStatus) => {
+                        handleStatusChange(selectedOrder.id, newStatus)
+                      }}>
+                        <SelectTrigger className={`w-36 ${getStatusBadge(getOrderStatus(selectedOrder)).color}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {orderStatuses.map((s) => (
+                            <SelectItem key={s.value} value={s.value}>
+                              <span className={`px-2 py-0.5 rounded text-sm ${s.color}`}>{s.label}</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 </div>
@@ -525,6 +655,99 @@ const loadOrders = async () => {
                   Close
                 </Button>
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Order Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Order #{editingOrder?.receiptNumber}</DialogTitle>
+          </DialogHeader>
+          {editingOrder && (
+            <div className="space-y-6">
+              {/* Order Items */}
+              <div>
+                <h3 className="font-medium mb-4">Order Items</h3>
+                <div className="space-y-3">
+                  {editFormData.items.map((item, index) => (
+                    <div key={index} className="flex items-center gap-4 p-3 border rounded-lg">
+                      <div className="flex-1">
+                        <p className="font-medium">{item.name}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs">Qty</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) => updateItemQuantity(index, parseInt(e.target.value) || 1)}
+                          className="w-16"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs">Price</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.price}
+                          onChange={(e) => updateItemPrice(index, parseFloat(e.target.value) || 0)}
+                          className="w-20"
+                        />
+                      </div>
+                      <p className="font-medium w-20 text-right">${item.total.toFixed(2)}</p>
+                      <Button variant="ghost" size="icon" onClick={() => removeItem(index)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Order Summary */}
+              <div className="space-y-4">
+                <h3 className="font-medium">Order Summary</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span>Subtotal</span>
+                    <span className="font-medium">${editFormData.subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Tax (10%)</span>
+                    <span className="font-medium">${editFormData.tax.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Label>Discount</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={editFormData.discount}
+                      onChange={(e) => updateDiscount(parseFloat(e.target.value) || 0)}
+                      className="w-24"
+                    />
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-bold text-lg">
+                    <span>Total</span>
+                    <span>${editFormData.total.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowEditModal(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveEdit}>
+                  Save Changes
+                </Button>
+              </DialogFooter>
             </div>
           )}
         </DialogContent>

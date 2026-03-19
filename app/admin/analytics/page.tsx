@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Package, Download } from "lucide-react"
+import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Package, Download, UserCheck, UserX } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -51,6 +51,10 @@ interface AnalyticsData {
     percentage: number
     revenue: number
   }>
+  spendingBreakdown?: {
+    guest: { revenue: number; orders: number }
+    registered: { revenue: number; orders: number }
+  }
 }
 
 export default function AnalyticsPage() {
@@ -279,6 +283,62 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Guest vs Registered Customer Spending */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Guest vs Registered Spending</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Guest Spending */}
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
+                    <UserX className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Guest Orders</p>
+                    <p className="text-sm text-muted-foreground">
+                      {analytics.spendingBreakdown?.guest.orders || 0} orders
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold">{formatCurrency(analytics.spendingBreakdown?.guest.revenue || 0)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {analytics.revenue.current > 0 
+                      ? ((analytics.spendingBreakdown?.guest.revenue || 0) / analytics.revenue.current * 100).toFixed(1) 
+                      : 0}% of revenue
+                  </p>
+                </div>
+              </div>
+              
+              {/* Registered Customer Spending */}
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+                    <UserCheck className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Registered Customers</p>
+                    <p className="text-sm text-muted-foreground">
+                      {analytics.spendingBreakdown?.registered.orders || 0} orders
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold">{formatCurrency(analytics.spendingBreakdown?.registered.revenue || 0)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {analytics.revenue.current > 0 
+                      ? ((analytics.spendingBreakdown?.registered.revenue || 0) / analytics.revenue.current * 100).toFixed(1) 
+                      : 0}% of revenue
+                  </p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
