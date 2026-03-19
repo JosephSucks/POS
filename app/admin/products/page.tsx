@@ -108,31 +108,42 @@ export default function ProductsPage() {
         price: formData.price,
         description: formData.description,
         image_url: formData.image,
-        category_id: formData.category, // Send category as category_id
+        category_id: formData.category,
       }
 
-      const response = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
+      let response
+      if (editingProduct) {
+        // Update existing product
+        response = await fetch(`/api/products/${editingProduct.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+      } else {
+        // Create new product
+        response = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+      }
 
       if (!response.ok) {
         const error = await response.json()
-        alert(`Error: ${error.error || 'Failed to create product'}`)
+        alert(`Error: ${error.error || 'Failed to save product'}`)
         return
       }
 
-      const newProduct = await response.json()
-      console.log('[v0] Product created:', newProduct)
+      const result = await response.json()
+      console.log('[v0] Product saved:', result)
       
       // Refresh products list
       await loadProducts()
       resetForm()
-      alert('Product created successfully!')
+      alert(editingProduct ? 'Product updated successfully!' : 'Product created successfully!')
     } catch (error) {
       console.error('[v0] Error submitting product:', error)
-      alert('Error creating product')
+      alert('Error saving product')
     }
   }
 

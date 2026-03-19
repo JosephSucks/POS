@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Search, Edit, Trash2, User, Mail, Phone, Award, DollarSign } from "lucide-react"
+import { Plus, Search, Edit, Trash2, User, Mail, Phone, Award, DollarSign, Crown, TrendingUp } from "lucide-react"
+import { getCustomerRank, getRankProgress, CUSTOMER_RANKS } from "@/lib/utils"
+import { Progress } from "@/components/ui/progress"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -242,6 +244,7 @@ export default function CustomersPage() {
               <TableRow>
                 <TableHead>Customer</TableHead>
                 <TableHead>Contact</TableHead>
+                <TableHead>Rank</TableHead>
                 <TableHead>Total Spent</TableHead>
                 <TableHead>Loyalty Points</TableHead>
                 <TableHead>Joined</TableHead>
@@ -256,59 +259,78 @@ export default function CustomersPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredCustomers.map((customer) => (
-                  <TableRow key={customer.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                          <User className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{customer.name}</p>
-                          <p className="text-xs text-muted-foreground">ID: #{customer.id}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        {customer.email && (
-                          <div className="flex items-center gap-1 text-sm">
-                            <Mail className="h-3 w-3 text-muted-foreground" />
-                            {customer.email}
+                filteredCustomers.map((customer) => {
+                  const { currentRank, progressPercent, amountToNextRank } = getRankProgress(Number(customer.total_spent) || 0)
+                  return (
+                    <TableRow key={customer.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 ${currentRank.bgColor} ${currentRank.borderColor}`}>
+                            <Crown className={`h-5 w-5 ${currentRank.color}`} />
                           </div>
-                        )}
-                        {customer.phone && (
-                          <div className="flex items-center gap-1 text-sm">
-                            <Phone className="h-3 w-3 text-muted-foreground" />
-                            {customer.phone}
+                          <div>
+                            <p className="font-medium">{customer.name}</p>
+                            <p className="text-xs text-muted-foreground">ID: #{customer.id}</p>
                           </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium">{formatCurrency(customer.total_spent)}</span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        <Award className="h-3 w-3 mr-1" />
-                        {customer.loyalty_points || 0}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(customer.created_at)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(customer)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(customer.id)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {customer.email && (
+                            <div className="flex items-center gap-1 text-sm">
+                              <Mail className="h-3 w-3 text-muted-foreground" />
+                              {customer.email}
+                            </div>
+                          )}
+                          {customer.phone && (
+                            <div className="flex items-center gap-1 text-sm">
+                              <Phone className="h-3 w-3 text-muted-foreground" />
+                              {customer.phone}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-2">
+                          <Badge className={`${currentRank.bgColor} ${currentRank.color} border ${currentRank.borderColor}`}>
+                            <Crown className="h-3 w-3 mr-1" />
+                            {currentRank.name}
+                          </Badge>
+                          {currentRank.nextRank && (
+                            <div className="space-y-1">
+                              <Progress value={progressPercent} className="h-1.5 w-20" />
+                              <p className="text-xs text-muted-foreground">
+                                ${amountToNextRank.toFixed(0)} to {currentRank.nextRank}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium">{formatCurrency(customer.total_spent)}</span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          <Award className="h-3 w-3 mr-1" />
+                          {customer.loyalty_points || 0}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatDate(customer.created_at)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" onClick={() => handleEdit(customer)}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(customer.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               )}
             </TableBody>
           </Table>

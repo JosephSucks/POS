@@ -16,7 +16,10 @@ import {
   Banknote,
   Clock,
   Globe,
-  Shield
+  Shield,
+  Lock,
+  Eye,
+  EyeOff
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -63,6 +66,10 @@ interface Settings {
   requireCustomer: boolean
   defaultPaymentMethod: string
   sessionTimeout: number
+  
+  // Security
+  adminPinEnabled: boolean
+  adminPin: string
 }
 
 const defaultSettings: Settings = {
@@ -93,12 +100,16 @@ const defaultSettings: Settings = {
   requireCustomer: false,
   defaultPaymentMethod: "cash",
   sessionTimeout: 30,
+  
+  adminPinEnabled: false,
+  adminPin: "1234",
 }
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>(defaultSettings)
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
+  const [showPin, setShowPin] = useState(false)
 
   useEffect(() => {
     // Load settings from localStorage
@@ -168,13 +179,13 @@ export default function SettingsPage() {
       </div>
 
       {hasChanges && (
-        <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+        <Badge variant="outline" className="bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-700">
           You have unsaved changes
         </Badge>
       )}
 
       <Tabs defaultValue="store" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto">
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 h-auto">
           <TabsTrigger value="store" className="gap-2">
             <Store className="h-4 w-4" />
             <span className="hidden sm:inline">Store</span>
@@ -194,6 +205,10 @@ export default function SettingsPage() {
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="h-4 w-4" />
             <span className="hidden sm:inline">Alerts</span>
+          </TabsTrigger>
+          <TabsTrigger value="security" className="gap-2">
+            <Lock className="h-4 w-4" />
+            <span className="hidden sm:inline">Security</span>
           </TabsTrigger>
         </TabsList>
 
@@ -358,8 +373,8 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-                    <Banknote className="h-5 w-5 text-green-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                    <Banknote className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
                     <Label>Cash Payments</Label>
@@ -374,8 +389,8 @@ export default function SettingsPage() {
               <Separator />
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
-                    <CreditCard className="h-5 w-5 text-blue-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                    <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
                     <Label>Card Payments</Label>
@@ -487,8 +502,8 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900">
-                    <Moon className="h-5 w-5 text-white" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900 dark:bg-yellow-400">
+                    <Moon className="h-5 w-5 text-white dark:text-gray-900" />
                   </div>
                   <div>
                     <Label>Dark Mode</Label>
@@ -582,6 +597,94 @@ export default function SettingsPage() {
                   checked={settings.soundEnabled}
                   onCheckedChange={(checked) => updateSetting('soundEnabled', checked)}
                 />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Security Settings */}
+        <TabsContent value="security" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5" />
+                Admin PIN Lock
+              </CardTitle>
+              <CardDescription>Require a PIN to access the admin panel</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                    <Shield className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div>
+                    <Label>Enable Admin PIN</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Require PIN entry to access admin dashboard
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={settings.adminPinEnabled}
+                  onCheckedChange={(checked) => updateSetting('adminPinEnabled', checked)}
+                />
+              </div>
+              
+              {settings.adminPinEnabled && (
+                <>
+                  <Separator />
+                  <div className="space-y-2">
+                    <Label htmlFor="adminPin">Admin PIN (4-6 digits)</Label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Input
+                          id="adminPin"
+                          type={showPin ? "text" : "password"}
+                          value={settings.adminPin}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '').slice(0, 6)
+                            updateSetting('adminPin', value)
+                          }}
+                          placeholder="Enter PIN"
+                          maxLength={6}
+                          className="pr-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                          onClick={() => setShowPin(!showPin)}
+                        >
+                          {showPin ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Staff will need to enter this PIN to access admin pages. Default: 1234
+                    </p>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <div>
+                  <p className="font-medium text-amber-800 dark:text-amber-300">Security Note</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-400">
+                    The admin PIN provides basic protection against accidental access. For sensitive data,
+                    consider implementing proper authentication.
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>

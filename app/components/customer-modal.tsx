@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Plus, User, Phone, Mail, Award } from "lucide-react"
+import { Search, Plus, User, Phone, Mail, Award, Crown } from "lucide-react"
+import { getCustomerRank, getRankProgress } from "@/lib/utils"
+import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -45,7 +47,16 @@ export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
     try {
       const response = await fetch('/api/customers')
       const allCustomers = await response.json()
-      setCustomers(allCustomers)
+      // Map database fields to component interface
+      const mappedCustomers = allCustomers.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        email: c.email || '',
+        phone: c.phone || '',
+        loyaltyPoints: c.loyalty_points || 0,
+        totalSpent: Number(c.total_spent) || 0,
+      }))
+      setCustomers(mappedCustomers)
     } catch (error) {
       console.error('[v0] Error loading customers:', error)
     }
@@ -57,7 +68,15 @@ export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
       try {
         const response = await fetch(`/api/customers?search=${encodeURIComponent(query)}`)
         const results = await response.json()
-        setCustomers(results)
+        const mappedResults = results.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          email: c.email || '',
+          phone: c.phone || '',
+          loyaltyPoints: c.loyalty_points || 0,
+          totalSpent: Number(c.total_spent) || 0,
+        }))
+        setCustomers(mappedResults)
       } catch (error) {
         console.error('[v0] Error searching customers:', error)
       }
@@ -89,6 +108,7 @@ export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
   }
 
   const handleSelectCustomer = (selectedCustomer: Customer) => {
+    console.log('[v0] Selected customer:', selectedCustomer)
     setCustomer(selectedCustomer)
     onClose()
   }
@@ -179,39 +199,55 @@ export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
             </Card>
           )}
 
-          {customers.map((cust) => (
-            <Card key={cust.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleSelectCustomer(cust)}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                      <User className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{cust.name}</p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Mail className="h-3 w-3" />
-                        {cust.email}
-                        {cust.phone && (
-                          <>
-                            <Phone className="h-3 w-3 ml-2" />
-                            {cust.phone}
-                          </>
-                        )}
+          {customers.map((cust) => {
+            const { currentRank, progressPercent, amountToNextRank } = getRankProgress(cust.totalSpent || 0)
+            return (
+              <Card key={cust.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleSelectCustomer(cust)}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center border-2 ${currentRank.bgColor} ${currentRank.borderColor}`}>
+                        <Crown className={`h-5 w-5 ${currentRank.color}`} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{cust.name}</p>
+                          <Badge className={`text-xs ${currentRank.bgColor} ${currentRank.color} border ${currentRank.borderColor}`}>
+                            {currentRank.name}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Mail className="h-3 w-3" />
+                          {cust.email}
+                          {cust.phone && (
+                            <>
+                              <Phone className="h-3 w-3 ml-2" />
+                              {cust.phone}
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    <div className="text-right space-y-1">
+                      <Badge variant="secondary">
+                        <Award className="h-3 w-3 mr-1" />
+                        {cust.loyaltyPoints} pts
+                      </Badge>
+                      <p className="text-sm font-medium">${(cust.totalSpent ?? 0).toFixed(2)}</p>
+                      {currentRank.nextRank && (
+                        <div className="space-y-1">
+                          <Progress value={progressPercent} className="h-1 w-16" />
+                          <p className="text-xs text-muted-foreground">
+                            ${amountToNextRank.toFixed(0)} to {currentRank.nextRank}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <Badge variant="secondary" className="mb-1">
-                      <Award className="h-3 w-3 mr-1" />
-                      {cust.loyaltyPoints} pts
-                    </Badge>
-                    <p className="text-sm text-muted-foreground">Spent: ${(cust.totalSpent ?? 0).toFixed(2)}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            )
+          })}
 
           {customers.length === 0 && <div className="text-center py-8 text-muted-foreground">No customers found</div>}
         </div>

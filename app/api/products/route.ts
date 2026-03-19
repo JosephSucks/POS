@@ -64,11 +64,26 @@ export async function POST(request: Request) {
       )
     }
 
-    console.log('[v0] Creating product:', { name, price })
+    console.log('[v0] Creating product:', { name, price, category_id, categoryType: typeof category_id })
+
+    // If category_id is a string (category name), look up the actual ID
+    let resolvedCategoryId = null
+    if (category_id) {
+      if (typeof category_id === 'string' && isNaN(Number(category_id))) {
+        // It's a category name, look up the ID
+        const categoryResult = await sql`
+          SELECT id FROM categories WHERE LOWER(name) = LOWER(${category_id})
+        `
+        resolvedCategoryId = categoryResult[0]?.id || null
+        console.log('[v0] Resolved category name to ID:', { name: category_id, id: resolvedCategoryId })
+      } else {
+        resolvedCategoryId = Number(category_id)
+      }
+    }
 
     const result = await sql`
       INSERT INTO products (name, price, description, image_url, category_id, created_at, updated_at)
-      VALUES (${name}, ${price}, ${description || null}, ${image_url || null}, ${category_id || null}, NOW(), NOW())
+      VALUES (${name}, ${price}, ${description || null}, ${image_url || null}, ${resolvedCategoryId}, NOW(), NOW())
       RETURNING id, name, CAST(price AS FLOAT) as price, description, image_url, category_id, created_at, updated_at
     `
 

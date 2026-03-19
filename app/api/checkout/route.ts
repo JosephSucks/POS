@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     const transaction: Transaction = await request.json()
 
     console.log('[v0] Saving transaction:', transaction)
+    console.log('[v0] Customer ID being saved:', transaction.customerId)
 
     // Create order - cash payments are completed immediately, card payments need manual processing
     const initialStatus = transaction.paymentMethod === 'cash' ? 'completed' : 'pending'

@@ -19,13 +19,13 @@ interface Discount {
 }
 
 interface Customer {
-  id: string
+  id: number
   name: string
   email: string
   phone: string
   loyaltyPoints: number
   totalSpent: number
-  purchaseHistory: Transaction[]
+  purchaseHistory?: Transaction[]
 }
 
 interface Transaction {

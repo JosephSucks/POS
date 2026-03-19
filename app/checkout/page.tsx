@@ -20,8 +20,9 @@ export default function CheckoutPage() {
 
   const handlePayment = async () => {
     try {
+      console.log('[v0] Customer at checkout:', customer)
       const transaction = {
-        customerId: customer?.id,
+        customerId: customer?.id || null,
         items: cart.map((item) => ({
           id: item.id,
           name: item.name,
