@@ -68,8 +68,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [appliedDiscount, setAppliedDiscount] = useState<Discount | null>(null)
   const [customer, setCustomer] = useState<Customer | null>(null)
 
-  // Load cart from localStorage on initial render
+  // Load cart and customer from localStorage on initial render
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    
     const savedCart = localStorage.getItem("cart")
     if (savedCart) {
       try {
@@ -78,12 +80,32 @@ export function CartProvider({ children }: { children: ReactNode }) {
         console.error("Failed to parse cart from localStorage:", error)
       }
     }
+    
+    const savedCustomer = localStorage.getItem("selectedCustomer")
+    if (savedCustomer) {
+      try {
+        setCustomer(JSON.parse(savedCustomer))
+      } catch (error) {
+        console.error("Failed to parse customer from localStorage:", error)
+      }
+    }
   }, [])
 
   // Save cart to localStorage whenever it changes
   useEffect(() => {
+    if (typeof window === 'undefined') return
     localStorage.setItem("cart", JSON.stringify(cart))
   }, [cart])
+
+  // Save customer to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (customer) {
+      localStorage.setItem("selectedCustomer", JSON.stringify(customer))
+    } else {
+      localStorage.removeItem("selectedCustomer")
+    }
+  }, [customer])
 
   const addToCart = (product: Product) => {
     setCart((prevCart) => {

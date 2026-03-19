@@ -14,11 +14,13 @@ export default function CheckoutPage() {
   const router = useRouter()
   const { cart, cartTotal, clearCart, customer, discountAmount } = useCart()
   const [paymentMethod, setPaymentMethod] = useState("cash")
-  const [isLoading, setIsLoading] = useState(true)
+  const [isHydrated, setIsHydrated] = useState(false)
   
-  // Wait for cart to hydrate before rendering
+  // Only render after cart and customer hydrate from localStorage
   useEffect(() => {
-    setIsLoading(false)
+    // Delay to allow useCart to load from localStorage
+    const timer = setTimeout(() => setIsHydrated(true), 100)
+    return () => clearTimeout(timer)
   }, [])
 
   const tax = cartTotal * 0.1
@@ -74,6 +76,7 @@ export default function CheckoutPage() {
       
       // Clear cart and redirect
       clearCart()
+      // Note: customer is NOT cleared, they remain selected for the next order
       router.push(`/success?${successParams.toString()}`)
     } catch (error) {
       console.error('[v0] Checkout error:', error)
@@ -82,7 +85,7 @@ export default function CheckoutPage() {
   }
 
   // Show loading while cart hydrates
-  if (isLoading) {
+  if (!isHydrated) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
