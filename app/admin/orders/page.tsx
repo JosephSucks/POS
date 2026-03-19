@@ -54,8 +54,15 @@ const loadOrders = async () => {
 
     const ordersWithCustomerInfo: OrderDetails[] = transactionsArray.map((transaction: any) => ({
       ...transaction,
-      timestamp: new Date(transaction.timestamp),
-      customerName: `Customer ${transaction.customerId}`,
+      id: transaction.id,
+      receiptNumber: transaction.id,
+      total: transaction.total_amount || 0,
+      subtotal: (transaction.total_amount || 0) * 0.9, // Estimate subtotal (90% of total)
+      tax: (transaction.total_amount || 0) * 0.1, // Estimate tax (10% of total)
+      discount: 0,
+      items: [],
+      timestamp: new Date(transaction.timestamp || Date.now()),
+      customerName: `Customer ${transaction.user_id}`,
       customerEmail: "",
     }))
 
