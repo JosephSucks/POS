@@ -20,6 +20,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params before accessing properties (Next.js 15+ requirement)
     const { id } = await params
     const { status } = await request.json()
     const orderId = id
