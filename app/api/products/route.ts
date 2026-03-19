@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Resolve category_id - it may be a string name like "food" or an integer ID
+    console.log('[v0] Creating product - resolving category from:', category_id)
     let resolvedCategoryId: number | null = null
     
     if (category_id !== null && category_id !== undefined && category_id !== '') {
@@ -74,11 +74,20 @@ export async function POST(request: Request) {
         resolvedCategoryId = numericId
       } else if (typeof category_id === 'string') {
         // It's a category name string, look up the actual ID from the database
-        const categoryResult = await sql`
-          SELECT id FROM categories WHERE LOWER(name) = LOWER(${category_id})
-        `
-        if (categoryResult.length > 0) {
-          resolvedCategoryId = categoryResult[0].id
+        try {
+          const categoryResult = await sql`
+            SELECT id FROM categories WHERE LOWER(name) = LOWER(${category_id})
+          `
+          if (categoryResult && categoryResult.length > 0) {
+            resolvedCategoryId = categoryResult[0].id
+            console.log('[v0] Found category ID:', resolvedCategoryId, 'for name:', category_id)
+          } else {
+            console.warn('[v0] Category not found for name:', category_id, '- using NULL')
+            resolvedCategoryId = null
+          }
+        } catch (categoryError) {
+          console.error('[v0] Error looking up category:', categoryError)
+          resolvedCategoryId = null
         }
       }
     }
