@@ -1,36 +1,10 @@
-import { neon } from '@neondatabase/serverless'
-
-const getDatabaseUrl = () => {
-  const url = 
-    process.env.DATABASE_URL ||
-    process.env.POSTGRES_URL ||
-    process.env.POSTGRES_URL_NON_POOLING ||
-    process.env.DATABASE_URL_UNPOOLED
-
-  if (!url) {
-    throw new Error('No database connection string found')
-  }
-  return url
-}
-
-const sql = neon(getDatabaseUrl())
+import { db } from "@/app/services/database"
 
 export async function GET() {
   try {
     console.log('[v0] Fetching transactions from database...')
     
-    const transactions = await sql`
-      SELECT 
-        id,
-        user_id,
-        total_amount,
-        payment_method,
-        timestamp,
-        items_count
-      FROM transactions 
-      ORDER BY timestamp DESC
-      LIMIT 100
-    `
+    const transactions = await db.getTransactions()
     
     console.log(`[v0] Successfully fetched ${transactions.length} transactions`)
     
