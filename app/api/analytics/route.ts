@@ -97,40 +97,6 @@ export async function GET(request: Request) {
       ORDER BY date ASC
     `
 
-    // Get guest vs registered customer spending
-    const guestSpending = await sql`
-      SELECT 
-        COALESCE(SUM(total), 0) as revenue,
-        COUNT(*) as order_count
-      FROM orders
-      WHERE customer_id IS NULL
-        AND created_at >= ${currentPeriodStart.toISOString()}
-    `
-
-    const registeredSpending = await sql`
-      SELECT 
-        COALESCE(SUM(total), 0) as revenue,
-        COUNT(*) as order_count
-      FROM orders
-      WHERE customer_id IS NOT NULL
-        AND created_at >= ${currentPeriodStart.toISOString()}
-    `
-
-    // Get top spending customers
-    const topCustomers = await sql`
-      SELECT 
-        c.id,
-        c.name,
-        c.email,
-        COALESCE(c.total_spent, 0) as total_spent,
-        COUNT(o.id) as order_count
-      FROM customers c
-      LEFT JOIN orders o ON c.id = o.customer_id
-      GROUP BY c.id, c.name, c.email, c.total_spent
-      ORDER BY c.total_spent DESC
-      LIMIT 10
-    `
-
     // Calculate growth percentages
     const currentRevenue = Number(currentMetrics[0]?.revenue) || 0
     const previousRevenue = Number(previousMetrics[0]?.revenue) || 0
@@ -193,24 +159,7 @@ export async function GET(request: Request) {
         { segment: 'New Customers', count: Math.floor((Number(customerCount[0]?.count) || 0) * 0.3), percentage: 30, revenue: currentRevenue * 0.2 },
         { segment: 'Regular Customers', count: Math.floor((Number(customerCount[0]?.count) || 0) * 0.5), percentage: 50, revenue: currentRevenue * 0.6 },
         { segment: 'VIP Customers', count: Math.floor((Number(customerCount[0]?.count) || 0) * 0.2), percentage: 20, revenue: currentRevenue * 0.2 },
-      ],
-      guestVsRegistered: {
-        guest: {
-          revenue: Number(guestSpending[0]?.revenue) || 0,
-          orders: Number(guestSpending[0]?.order_count) || 0
-        },
-        registered: {
-          revenue: Number(registeredSpending[0]?.revenue) || 0,
-          orders: Number(registeredSpending[0]?.order_count) || 0
-        }
-      },
-      topCustomers: topCustomers.map((c: any) => ({
-        id: c.id,
-        name: c.name,
-        email: c.email,
-        totalSpent: Number(c.total_spent) || 0,
-        orderCount: Number(c.order_count) || 0
-      }))
+      ]
     }
 
     console.log('[v0] Analytics fetched successfully')
