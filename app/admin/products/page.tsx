@@ -62,19 +62,19 @@ export default function ProductsPage() {
       const response = await fetch('/api/products')
       if (!response.ok) throw new Error('Failed to fetch products')
       const data = await response.json()
-      // Map API response to InventoryItem format
+      // Map API response to InventoryItem format, preserving stock and reorder_level from DB
       const inventory = data.map((product: any) => ({
         id: product.id,
         name: product.name,
         price: product.price,
-        cost: 0,
+        cost: product.cost || 0,
         category: product.category,
         description: product.description || '',
-        stock: 0,
-        lowStockThreshold: 5,
-        supplier: '',
+        stock: product.stock || 0,
+        lowStockThreshold: product.reorder_level || 10,
+        supplier: product.supplier || '',
         image: product.image_url || product.image,
-        lastRestocked: new Date(),
+        lastRestocked: product.stock_updated_at ? new Date(product.stock_updated_at) : new Date(),
       }))
       setProducts(inventory)
     } catch (error) {
@@ -417,7 +417,11 @@ export default function ProductsPage() {
               <div className="space-y-2">
                 <div className="flex items-start justify-between">
                   <h3 className="font-medium line-clamp-1">{product.name}</h3>
-                  <Badge variant={product.stock <= product.lowStockThreshold ? "destructive" : "secondary"}>
+                  <Badge className={
+                    product.stock >= 50 ? 'bg-green-100 text-green-700 hover:bg-green-100' :
+                    product.stock >= 20 ? 'bg-amber-100 text-amber-700 hover:bg-amber-100' :
+                    'bg-red-100 text-red-700 hover:bg-red-100'
+                  }>
                     {product.stock}
                   </Badge>
                 </div>
