@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Plus, User, Phone, Mail, Award, Crown } from "lucide-react"
+import { Search, Plus, User, Phone, Mail, Award, Crown, X } from "lucide-react"
 import { getCustomerRank, getRankProgress } from "@/lib/utils"
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
@@ -187,16 +187,19 @@ export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
             <Card className="border-primary">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                       <User className="h-5 w-5 text-primary" />
                     </div>
-                    <div>
-                      <p className="font-medium">{customer.name}</p>
-                      <p className="text-sm text-muted-foreground">Current Customer</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm">{customer.name}</p>
+                      <p className="text-xs text-muted-foreground">Current Customer</p>
                     </div>
                   </div>
-                  <Button variant="outline" onClick={() => setCustomer(null)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive md:hidden flex-shrink-0" onClick={() => setCustomer(null)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" className="hidden md:inline-flex flex-shrink-0" onClick={() => setCustomer(null)}>
                     Remove
                   </Button>
                 </div>
