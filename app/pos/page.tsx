@@ -30,6 +30,21 @@ export default function POSPage() {
 
   const router = useRouter()
 
+  const handleThemeToggle = async () => {
+    const newDarkMode = theme === 'light'
+    toggleTheme()
+    
+    try {
+      await fetch('/api/settings/update-theme', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ darkMode: newDarkMode }),
+      })
+    } catch (error) {
+      console.error('Failed to save theme setting:', error)
+    }
+  }
+
   return (
     <div className="h-screen bg-background flex flex-col md:flex-row overflow-hidden">
       {/* Mobile: Cart Sheet */}
@@ -104,7 +119,7 @@ export default function POSPage() {
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 md:h-9 md:w-9"
-                  onClick={toggleTheme}
+                  onClick={handleThemeToggle}
                   title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
                 >
                   {theme === 'light' ? <Moon className="h-4 w-4 md:h-5 md:w-5" /> : <Sun className="h-4 w-4 md:h-5 md:w-5" />}
