@@ -32,7 +32,7 @@ export default function POSPage() {
     <div className="h-screen bg-background flex flex-col md:flex-row overflow-hidden">
       {/* Mobile: Cart Sheet */}
       <Sheet open={showCart} onOpenChange={setShowCart}>
-        <SheetContent side="right" className="p-0 w-full sm:w-96 flex flex-col pt-3">
+        <SheetContent side="right" className="p-0 w-full sm:w-96 flex flex-col">
           <div className="sr-only">
             <h2>Cart</h2>
           </div>
