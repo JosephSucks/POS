@@ -98,6 +98,9 @@ importers:
       '@vercel/analytics':
         specifier: 1.3.1
         version: 1.3.1(next@15.2.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      '@vercel/postgres':
+        specifier: ^0.10.0
+        version: 0.10.0
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.27(postcss@8.5.8)
@@ -1134,6 +1137,11 @@ packages:
       react:
         optional: true
 
+  '@vercel/postgres@0.10.0':
+    resolution: {integrity: sha512-fSD23DxGND40IzSkXjcFcxr53t3Tiym59Is0jSYIFpG4/0f0KO9SGtcp1sXiebvPaGe7N/tU05cH4yt2S6/IPg==}
+    engines: {node: '>=18.14'}
+    deprecated: '@vercel/postgres is deprecated. If you are setting up a new database, you can choose an alternate storage solution from the Vercel Marketplace. If you had an existing Vercel Postgres database, it should have been migrated to Neon as a native Vercel integration. You can find more details and the guide to migrate to Neon''s SDKs here: https://neon.com/docs/guides/vercel-postgres-transition-guide'
+
   any-promise@1.3.0:
     resolution: {integrity: sha512-7UvmKalWRt1wgjL1RrGxoSJW/0QZFIegpeGvZG9kjp8vrRu55XTHbwnqq2GpXm9uLbcuhxm3IqX9OB4MZR1b2A==}
 
@@ -1172,6 +1180,10 @@ packages:
     resolution: {integrity: sha512-ZC5Bd0LgJXgwGqUknZY/vkUQ04r8NXnJZ3yYi4vDmSiZmC/pdSN0NbNRPxZpbtO4uAfDUAFffO8IZoM3Gj8IkA==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
+
+  bufferutil@4.1.0:
+    resolution: {integrity: sha512-ZMANVnAixE6AWWnPzlW2KpUrxhm9woycYvPOo67jWHyFowASTEd9s+QN1EIMsSDtwhIxN4sWE1jotpuDUIgyIw==}
+    engines: {node: '>=6.14.2'}
 
   busboy@1.6.0:
     resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
@@ -1479,6 +1491,10 @@ packages:
         optional: true
       sass:
         optional: true
+
+  node-gyp-build@4.8.4:
+    resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
+    hasBin: true
 
   node-releases@2.0.36:
     resolution: {integrity: sha512-TdC8FSgHz8Mwtw9g5L4gR/Sh9XhSP/0DEkQxfEFXOpiul5IiHgHan2VhYYb6agDSfp4KuvltmGApc8HMgUrIkA==}
@@ -1861,6 +1877,18 @@ packages:
 
   victory-vendor@36.9.2:
     resolution: {integrity: sha512-PnpQQMuxlwYdocC8fIJqVXvkeViHYzotI+NJrCuav0ZYFoq912ZHBk3mCeuj+5/VpodOjPe1z0Fk2ihgzlXqjQ==}
+
+  ws@8.19.0:
+    resolution: {integrity: sha512-blAT2mjOEIi0ZzruJfIhb3nps74PRWTCz1IjglWEEpQl5XS/UNama6u2/rjFkDDouqr4L67ry+1aGIALViWjDg==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
 
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
@@ -2777,6 +2805,14 @@ snapshots:
       next: 15.2.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
 
+  '@vercel/postgres@0.10.0':
+    dependencies:
+      '@neondatabase/serverless': 0.9.5
+      bufferutil: 4.1.0
+      ws: 8.19.0(bufferutil@4.1.0)
+    transitivePeerDependencies:
+      - utf-8-validate
+
   any-promise@1.3.0: {}
 
   anymatch@3.1.3:
@@ -2814,6 +2850,10 @@ snapshots:
       electron-to-chromium: 1.5.321
       node-releases: 2.0.36
       update-browserslist-db: 1.2.3(browserslist@4.28.1)
+
+  bufferutil@4.1.0:
+    dependencies:
+      node-gyp-build: 4.8.4
 
   busboy@1.6.0:
     dependencies:
@@ -3090,6 +3130,8 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - babel-plugin-macros
+
+  node-gyp-build@4.8.4: {}
 
   node-releases@2.0.36: {}
 
@@ -3484,5 +3526,9 @@ snapshots:
       d3-shape: 3.2.0
       d3-time: 3.1.0
       d3-timer: 3.0.1
+
+  ws@8.19.0(bufferutil@4.1.0):
+    optionalDependencies:
+      bufferutil: 4.1.0
 
   zod@3.25.76: {}

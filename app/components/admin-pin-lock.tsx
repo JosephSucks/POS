@@ -19,25 +19,37 @@ export default function AdminPinLock({ children }: AdminPinLockProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    // Check if PIN is enabled and if already authenticated
-    const settings = localStorage.getItem('pos-settings')
-    if (settings) {
+    // Load PIN settings from database
+    const loadSettings = async () => {
       try {
-        const parsed = JSON.parse(settings)
-        setIsPinEnabled(parsed.adminPinEnabled || false)
-        setStoredPin(parsed.adminPin || "1234")
+        const response = await fetch('/api/settings')
+        const settings = await response.json()
+        
+        const adminPinEnabled = settings.adminPinEnabled || true // Default to true
+        const adminPin = settings.adminPin || "1234"
+        
+        setIsPinEnabled(adminPinEnabled)
+        setStoredPin(adminPin)
         
         // Check if already authenticated in this session
         const sessionAuth = sessionStorage.getItem('admin-authenticated')
         if (sessionAuth === 'true') {
           setIsLocked(false)
+        } else if (adminPinEnabled) {
+          setIsLocked(true)
+        } else {
+          setIsLocked(false)
         }
-      } catch (e) {
-        console.error('Failed to parse settings:', e)
+      } catch (error) {
+        console.error('[v0] Failed to load PIN settings:', error)
+        // Fallback to defaults
+        setIsPinEnabled(true)
+        setStoredPin("1234")
+        setIsLocked(true)
       }
-    } else {
-      setIsPinEnabled(false)
     }
+    
+    loadSettings()
   }, [])
 
   useEffect(() => {

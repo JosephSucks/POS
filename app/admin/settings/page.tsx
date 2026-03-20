@@ -102,7 +102,7 @@ const defaultSettings: Settings = {
   defaultPaymentMethod: "cash",
   sessionTimeout: 30,
   
-  adminPinEnabled: false,
+  adminPinEnabled: true,
   adminPin: "1234",
 }
 
@@ -114,15 +114,27 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
 
   useEffect(() => {
-    // Load settings from localStorage
-    const savedSettings = localStorage.getItem('pos-settings')
-    if (savedSettings) {
+    // Load settings from database
+    const loadSettings = async () => {
       try {
-        setSettings(JSON.parse(savedSettings))
-      } catch (e) {
-        console.error('Failed to parse settings:', e)
+        const response = await fetch('/api/settings')
+        if (!response.ok) throw new Error('Failed to fetch settings')
+        const dbSettings = await response.json()
+        setSettings(prev => ({ ...prev, ...dbSettings }))
+      } catch (error) {
+        console.error('[v0] Failed to load settings:', error)
+        // Fall back to localStorage for backwards compatibility
+        const savedSettings = localStorage.getItem('pos-settings')
+        if (savedSettings) {
+          try {
+            setSettings(JSON.parse(savedSettings))
+          } catch (e) {
+            console.error('Failed to parse localStorage settings:', e)
+          }
+        }
       }
     }
+    loadSettings()
   }, [])
 
   useEffect(() => {
@@ -142,12 +154,21 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      localStorage.setItem('pos-settings', JSON.stringify(settings))
+      // Save to database
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      })
+      
+      if (!response.ok) throw new Error('Failed to save settings')
+      
       setHasChanges(false)
       // Show success feedback
       setTimeout(() => setSaving(false), 500)
     } catch (error) {
-      console.error('Failed to save settings:', error)
+      console.error('[v0] Failed to save settings:', error)
+      alert('Failed to save settings. Please try again.')
       setSaving(false)
     }
   }
@@ -155,8 +176,7 @@ export default function SettingsPage() {
   const handleReset = () => {
     if (confirm('Are you sure you want to reset all settings to defaults?')) {
       setSettings(defaultSettings)
-      localStorage.removeItem('pos-settings')
-      setHasChanges(false)
+      setHasChanges(true)
     }
   }
 

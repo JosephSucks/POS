@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Minus, Plus, ShoppingCart, Trash2, User, Tag } from "lucide-react"
+import { Minus, Plus, ShoppingCart, Trash2, User, Tag, LogOut } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,13 @@ export default function CartSidebar() {
 
   const handleCheckout = () => {
     router.push("/checkout")
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('pos-logged-in')
+    localStorage.removeItem('pos-username')
+    document.cookie = 'pos-logged-in=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC'
+    router.push('/')
   }
 
   return (
@@ -112,7 +119,7 @@ export default function CartSidebar() {
         )}
       </div>
 
-      <div className="border-t p-4">
+      <div className="border-t p-4 space-y-2">
         <div className="mb-4 space-y-2">
           <div className="flex justify-between">
             <p>Subtotal</p>
@@ -131,6 +138,10 @@ export default function CartSidebar() {
         </div>
         <Button className="w-full" size="lg" disabled={cart.length === 0} onClick={handleCheckout}>
           Checkout
+        </Button>
+        <Button variant="outline" className="w-full" onClick={handleLogout}>
+          <LogOut className="h-4 w-4 mr-2" />
+          Logout
         </Button>
       </div>
       <CustomerModal isOpen={showCustomerModal} onClose={() => setShowCustomerModal(false)} />
