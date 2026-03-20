@@ -117,12 +117,12 @@ export default function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-md max-h-[85vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Apply Discount</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto flex-1 pr-1">
           {appliedDiscount && (
             <Card className="border-green-200 bg-green-50">
               <CardContent className="p-4">

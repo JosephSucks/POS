@@ -120,7 +120,7 @@ export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Customer Management</DialogTitle>
         </DialogHeader>
@@ -208,40 +208,40 @@ export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
             const { currentRank, progressPercent, amountToNextRank } = getRankProgress(cust.totalSpent || 0)
             return (
               <Card key={cust.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleSelectCustomer(cust)}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center border-2 ${currentRank.bgColor} ${currentRank.borderColor}`}>
-                        <Crown className={`h-5 w-5 ${currentRank.color}`} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{cust.name}</p>
-                          <Badge className={`text-xs ${currentRank.bgColor} ${currentRank.color} border ${currentRank.borderColor}`}>
-                            {currentRank.name}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Mail className="h-3 w-3" />
-                          {cust.email}
-                          {cust.phone && (
-                            <>
-                              <Phone className="h-3 w-3 ml-2" />
-                              {cust.phone}
-                            </>
-                          )}
-                        </div>
-                      </div>
+                <CardContent className="p-3">
+                  <div className="flex items-start gap-3">
+                    <div className={`h-9 w-9 flex-shrink-0 rounded-full flex items-center justify-center border-2 ${currentRank.bgColor} ${currentRank.borderColor}`}>
+                      <Crown className={`h-4 w-4 ${currentRank.color}`} />
                     </div>
-                    <div className="text-right space-y-1">
-                      <Badge variant="secondary">
-                        <Award className="h-3 w-3 mr-1" />
-                        {cust.loyaltyPoints} pts
-                      </Badge>
-                      <p className="text-sm font-medium">${(cust.totalSpent ?? 0).toFixed(2)}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium text-sm">{cust.name}</p>
+                        <Badge className={`text-xs ${currentRank.bgColor} ${currentRank.color} border ${currentRank.borderColor}`}>
+                          {currentRank.name}
+                        </Badge>
+                      </div>
+                      <div className="mt-1 space-y-0.5">
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
+                          <Mail className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{cust.email}</span>
+                        </p>
+                        {cust.phone && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Phone className="h-3 w-3 flex-shrink-0" />
+                            {cust.phone}
+                          </p>
+                        )}
+                      </div>
+                      <div className="mt-2 flex items-center gap-3">
+                        <Badge variant="secondary" className="text-xs">
+                          <Award className="h-3 w-3 mr-1" />
+                          {cust.loyaltyPoints} pts
+                        </Badge>
+                        <span className="text-xs font-medium">${(cust.totalSpent ?? 0).toFixed(2)} spent</span>
+                      </div>
                       {currentRank.nextRank && (
-                        <div className="space-y-1">
-                          <Progress value={progressPercent} className="h-1 w-16" />
+                        <div className="mt-2 space-y-1">
+                          <Progress value={progressPercent} className="h-1" />
                           <p className="text-xs text-muted-foreground">
                             ${amountToNextRank.toFixed(0)} to {currentRank.nextRank}
                           </p>
