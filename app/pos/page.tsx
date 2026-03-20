@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Settings, ShoppingCart, Menu } from "lucide-react"
+import { Search, Settings, ShoppingCart } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import ProductGrid from "../components/product-grid"
 import CartSidebar from "../components/cart-sidebar"
@@ -32,7 +32,10 @@ export default function POSPage() {
     <div className="h-screen bg-background flex flex-col md:flex-row overflow-hidden">
       {/* Mobile: Cart Sheet */}
       <Sheet open={showCart} onOpenChange={setShowCart}>
-        <SheetContent side="right" className="p-0 w-full sm:w-96">
+        <SheetContent side="right" className="p-0 w-full sm:w-96 flex flex-col">
+          <div className="sr-only">
+            <h2>Cart</h2>
+          </div>
           <CartSidebar />
         </SheetContent>
       </Sheet>
@@ -69,42 +72,13 @@ export default function POSPage() {
           <div className="px-4 py-3 md:px-6 md:py-4 space-y-3 md:space-y-0">
             {/* Top Row: Menu + Search + Cart */}
             <div className="flex items-center justify-between gap-3">
-              {/* Left: Menu Button + Search */}
+              {/* Left: Search */}
               <div className="flex items-center gap-2 flex-1 min-w-0">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="md:hidden flex-shrink-0">
-                      <Menu className="h-5 w-5" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="p-0 w-72">
-                    <div className="p-6 border-b">
-                      <h2 className="text-lg font-bold">Categories</h2>
-                    </div>
-                    <div className="p-4 space-y-2">
-                      {CATEGORIES.map((cat) => (
-                        <button
-                          key={cat.id}
-                          onClick={() => setSelectedCategory(cat.id)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
-                            selectedCategory === cat.id
-                              ? "bg-primary text-primary-foreground"
-                              : "text-foreground hover:bg-muted"
-                          }`}
-                        >
-                          <span className="text-xl">{cat.icon}</span>
-                          <span>{cat.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </SheetContent>
-                </Sheet>
-
                 <div className="relative flex-1 min-w-0">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                   <Input
-                    placeholder="Search products..."
-                    className="pl-9 pr-3 bg-muted border-0"
+                    placeholder="Search..."
+                    className="pl-9 pr-3 bg-muted border-0 text-sm"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -137,25 +111,23 @@ export default function POSPage() {
             </div>
 
             {/* Mobile: Category Tabs */}
-            <div className="md:hidden">
-              <ScrollArea className="w-full">
-                <div className="flex gap-2 pb-1">
-                  {CATEGORIES.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className={`whitespace-nowrap px-3 py-2 rounded-full font-medium transition-all text-sm flex items-center gap-2 flex-shrink-0 ${
-                        selectedCategory === cat.id
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted hover:bg-muted/80 text-foreground"
-                      }`}
-                    >
-                      <span>{cat.icon}</span>
-                      <span>{cat.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </ScrollArea>
+            <div className="md:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-2 pb-1 w-max">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`whitespace-nowrap px-3 py-1.5 rounded-full font-medium transition-all text-sm flex items-center gap-1.5 flex-shrink-0 ${
+                      selectedCategory === cat.id
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted hover:bg-muted/80 text-foreground"
+                    }`}
+                  >
+                    <span>{cat.icon}</span>
+                    <span>{cat.name}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </header>
@@ -169,7 +141,7 @@ export default function POSPage() {
       </main>
 
       {/* Desktop: Cart Sidebar */}
-      <aside className="hidden md:flex w-80 lg:w-96 border-l bg-card/50 flex-col max-h-screen">
+      <aside className="hidden md:flex w-80 lg:w-96 border-l bg-card/50 flex-col overflow-hidden">
         <CartSidebar />
       </aside>
     </div>
