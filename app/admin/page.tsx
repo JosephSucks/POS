@@ -141,25 +141,6 @@ export default function AdminDashboard() {
     )
   }
 
-  if (error || !stats) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl lg:text-3xl font-bold">Dashboard</h1>
-        {error && (
-          <Card className="border-amber-200 bg-amber-50">
-            <CardContent className="p-6">
-              <p className="text-amber-900 font-medium">Could not fully load dashboard</p>
-              <p className="text-sm text-amber-700 mt-2">{error}</p>
-              <Button onClick={loadDashboardData} className="mt-4">
-                Retry
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}

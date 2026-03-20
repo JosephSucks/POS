@@ -76,7 +76,7 @@ export default function CheckoutPage() {
       const result = await response.json()
       console.log('[v0] Payment successful, order ID:', result.orderId)
       
-      // Redirect to success page with order info
+      // Build success URL with order info
       const successParams = new URLSearchParams({
         orderId: result.orderId.toString(),
         total: grandTotal.toFixed(2),
@@ -92,11 +92,13 @@ export default function CheckoutPage() {
         })))
       })
       
-      console.log('[v0] Clearing cart and redirecting to success')
-      // Clear cart and redirect
+      console.log('[v0] Payment complete, redirecting immediately')
+      
+      // Clear cart IMMEDIATELY and redirect WITHOUT AWAITING
       clearCart()
-      // Note: customer is NOT cleared, they remain selected for the next order
-      router.push(`/success?${successParams.toString()}`)
+      // Use replace() to avoid showing checkout page in browser history
+      // Push redirect immediately without waiting for state updates
+      window.location.href = `/success?${successParams.toString()}`
     } catch (error) {
       console.error('[v0] Checkout error:', error)
       alert('Failed to process payment. Please try again.')
