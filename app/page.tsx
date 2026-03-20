@@ -44,7 +44,7 @@ export default function LoginPage() {
       // Store login state in localStorage and cookie
       localStorage.setItem('pos-logged-in', 'true')
       localStorage.setItem('pos-username', username)
-      
+
       // Also set cookie for middleware to check
       document.cookie = 'pos-logged-in=true; path=/'
 
@@ -71,7 +71,7 @@ export default function LoginPage() {
               <LogIn className="h-8 w-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-3xl">POS System</CardTitle>
+          <CardTitle className="text-3xl">Joseph POS System</CardTitle>
           <CardDescription>Enter your credentials to access the Point of Sale</CardDescription>
         </CardHeader>
         <CardContent>
