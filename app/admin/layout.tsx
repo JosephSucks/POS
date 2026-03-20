@@ -76,7 +76,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 h-11 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/pos")}
         >
           <LogOut className="h-5 w-5" />
           Back to POS

@@ -236,8 +236,8 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      {/* Customers Table */}
-      <Card>
+      {/* Customers Table - Desktop Only */}
+      <Card className="hidden md:block">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -337,6 +337,96 @@ export default function CustomersPage() {
         </CardContent>
       </Card>
 
+      {/* Customers Cards - Mobile Only */}
+      <div className="md:hidden space-y-3">
+        {filteredCustomers.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">{searchQuery ? "No customers found" : "No customers yet"}</p>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredCustomers.map((customer) => {
+            const { currentRank, progressPercent, amountToNextRank } = getRankProgress(Number(customer.total_spent) || 0)
+            return (
+              <Card key={customer.id}>
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3 flex-1">
+                        <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 flex-shrink-0 ${currentRank.bgColor} ${currentRank.borderColor}`}>
+                          <Crown className={`h-5 w-5 ${currentRank.color}`} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-base">{customer.name}</p>
+                          <p className="text-xs text-muted-foreground">ID: #{customer.id}</p>
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-semibold text-sm">{formatCurrency(customer.total_spent)}</p>
+                        <p className="text-xs text-muted-foreground">Spent</p>
+                      </div>
+                    </div>
+
+                    {customer.email && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Mail className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">{customer.email}</span>
+                      </div>
+                    )}
+                    {customer.phone && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="h-4 w-4 flex-shrink-0" />
+                        <span>{customer.phone}</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2 text-sm pt-1">
+                      <Badge className={`${currentRank.bgColor} ${currentRank.color} border ${currentRank.borderColor} text-xs`}>
+                        {currentRank.name}
+                      </Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        <Award className="h-3 w-3 mr-1" />
+                        {customer.loyalty_points || 0} pts
+                      </Badge>
+                    </div>
+
+                    {currentRank.nextRank && (
+                      <div className="space-y-1 pt-2 border-t">
+                        <Progress value={progressPercent} className="h-2" />
+                        <p className="text-xs text-muted-foreground text-center">
+                          ${amountToNextRank.toFixed(0)} to {currentRank.nextRank}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 pt-2 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleEdit(customer)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(customer.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })
+        )}
+      </div>
       {/* Add/Edit Customer Modal */}
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent>
