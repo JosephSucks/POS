@@ -6,8 +6,9 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Force rebuild
   reactStrictMode: true,
+  // Cache invalidation
+  swcMinify: true,
 }
 
 export default nextConfig

@@ -41,7 +41,7 @@ function SuccessContent() {
     const itemsParam = searchParams.get('items')
     
     if (!orderId || !total) {
-      router.push("/")
+      router.push("/pos")
       return
     }
     
@@ -64,7 +64,7 @@ function SuccessContent() {
   }, [searchParams, router])
 
   const handleBackToPOS = () => {
-    router.push("/")
+    router.push("/pos")
   }
 
   const handlePrint = () => {
