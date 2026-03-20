@@ -111,6 +111,8 @@ export default function ProductsPage() {
         description: formData.description,
         image_url: formData.image,
         category_id: formData.category,
+        stock: formData.stock,
+        reorder_level: formData.lowStockThreshold,
       }
 
       let response

@@ -31,7 +31,10 @@ export async function GET(
         p.description,
         p.image_url,
         p.category_id,
-        c.name as category
+        c.name as category,
+        p.stock,
+        p.reorder_level,
+        p.stock_updated_at
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.id = ${parseInt(productId)}
@@ -59,9 +62,9 @@ export async function PUT(
     const params = await props.params
     const productId = params.id
     const body = await request.json()
-    const { name, price, description, image_url, category_id } = body
+    const { name, price, description, image_url, category_id, stock, reorder_level } = body
 
-    console.log('[v0] Updating product:', { productId, name, price, category_id })
+    console.log('[v0] Updating product:', { productId, name, price, stock, reorder_level, category_id })
 
     // If category_id is a string (category name), look up the actual ID
     let resolvedCategoryId = null
@@ -84,9 +87,12 @@ export async function PUT(
         description = COALESCE(${description}, description),
         image_url = COALESCE(${image_url}, image_url),
         category_id = ${resolvedCategoryId},
+        stock = COALESCE(${stock}, stock),
+        reorder_level = COALESCE(${reorder_level}, reorder_level),
+        stock_updated_at = NOW(),
         updated_at = NOW()
       WHERE id = ${parseInt(productId)}
-      RETURNING id, name, CAST(price AS FLOAT) as price, description, image_url, category_id, updated_at
+      RETURNING id, name, CAST(price AS FLOAT) as price, description, image_url, category_id, stock, reorder_level, updated_at
     `
 
     if (result.length === 0) {
@@ -129,12 +135,7 @@ export async function DELETE(
       DELETE FROM order_items WHERE product_id = ${parseInt(productId)}
     `
 
-    // Delete related inventory records
-    await sql`
-      DELETE FROM inventory WHERE product_id = ${parseInt(productId)}
-    `
-
-    // Delete the product
+    // Delete the product (no inventory table to delete from)
     await sql`
       DELETE FROM products WHERE id = ${parseInt(productId)}
     `
