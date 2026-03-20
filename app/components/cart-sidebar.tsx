@@ -29,8 +29,8 @@ export default function CartSidebar() {
 
   return (
     <div className="flex h-full flex-col bg-background">
-      <div className="flex items-center justify-between border-b p-4 gap-2">
-        <h2 className="flex items-center text-lg font-semibold min-w-0">
+      <div className="flex items-center border-b p-4 gap-2">
+        <h2 className="flex items-center text-lg font-semibold flex-1">
           <ShoppingCart className="mr-2 h-5 w-5 flex-shrink-0" />
           <span className="truncate">Cart</span>
         </h2>
