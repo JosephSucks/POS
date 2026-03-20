@@ -125,7 +125,7 @@ export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
           <DialogTitle>Customer Management</DialogTitle>
         </DialogHeader>
 
-        <div className="flex gap-2 mb-4">
+        <div className="flex flex-col gap-3 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -135,7 +135,7 @@ export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
               onChange={(e) => handleSearch(e.target.value)}
             />
           </div>
-          <Button onClick={() => setShowAddForm(!showAddForm)}>
+          <Button onClick={() => setShowAddForm(!showAddForm)} className="w-full">
             <Plus className="h-4 w-4 mr-2" />
             Add Customer
           </Button>

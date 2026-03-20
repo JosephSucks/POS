@@ -131,77 +131,86 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-4xl py-8">
-      <Button variant="ghost" className="mb-6" onClick={() => router.push("/")}>
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to POS
-      </Button>
+    <div className="min-h-screen bg-background py-8 px-4">
+      <div className="mx-auto max-w-4xl">
+        <Button variant="ghost" className="mb-6" onClick={() => router.push("/pos")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to POS
+        </Button>
 
-      <h1 className="mb-6 text-3xl font-bold">Checkout</h1>
+        <h1 className="mb-8 text-3xl font-bold">Checkout</h1>
 
-      <div className="grid gap-8 md:grid-cols-2">
-        <div>
-          <h2 className="mb-4 text-xl font-semibold">Order Summary</h2>
-          <div className="rounded-lg border p-4 bg-card">
-            {cart.map((item) => (
-              <div key={item.id} className="mb-3 flex justify-between">
-                <div>
-                  <p className="font-medium">{item.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    ${item.price.toFixed(2)} × {item.quantity}
-                  </p>
+        <div className="grid gap-8 md:grid-cols-3">
+          {/* Order Summary - Takes 2 columns on md and up */}
+          <div className="md:col-span-2">
+            <h2 className="mb-4 text-xl font-semibold">Order Summary</h2>
+            <div className="rounded-lg border p-6 bg-card space-y-4">
+              {cart.map((item) => (
+                <div key={item.id} className="flex justify-between items-start pb-4 border-b last:border-b-0">
+                  <div className="flex-1">
+                    <p className="font-medium">{item.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      ${item.price.toFixed(2)} × {item.quantity}
+                    </p>
+                  </div>
+                  <p className="font-semibold ml-4">${(item.price * item.quantity).toFixed(2)}</p>
                 </div>
-                <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
-              </div>
-            ))}
+              ))}
 
-            <Separator className="my-4" />
+              <Separator className="my-4" />
 
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <p>Subtotal</p>
-                <p>${cartTotal.toFixed(2)}</p>
-              </div>
-              <div className="flex justify-between">
-                <p>Tax (10%)</p>
-                <p>${tax.toFixed(2)}</p>
-              </div>
-              <div className="flex justify-between">
-                <p>Discount</p>
-                <p>-${discountAmount.toFixed(2)}</p>
-              </div>
-              <div className="flex justify-between font-bold">
-                <p>Total</p>
-                <p>${grandTotal.toFixed(2)}</p>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <p>Subtotal</p>
+                  <p className="font-medium">${cartTotal.toFixed(2)}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p>Tax (10%)</p>
+                  <p className="font-medium">${tax.toFixed(2)}</p>
+                </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <p>Discount</p>
+                    <p className="font-medium">-${discountAmount.toFixed(2)}</p>
+                  </div>
+                )}
+                <Separator className="my-3" />
+                <div className="flex justify-between text-base font-bold">
+                  <p>Total</p>
+                  <p className="text-primary">${grandTotal.toFixed(2)}</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div>
-          <h2 className="mb-4 text-xl font-semibold">Payment Method</h2>
-          <div className="rounded-lg border p-4 bg-card">
-            <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-              <div className="flex items-center space-x-2 rounded-md border p-3">
-                <RadioGroupItem value="card" id="card" />
-                <Label htmlFor="card" className="flex items-center">
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  Credit/Debit Card
-                </Label>
-              </div>
+          {/* Payment Method */}
+          <div>
+            <h2 className="mb-4 text-xl font-semibold">Payment</h2>
+            <div className="rounded-lg border p-6 bg-card sticky top-8 space-y-4">
+              <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
+                <div className="flex items-center space-x-3 rounded-md border p-4 cursor-pointer hover:bg-muted transition-colors" onClick={() => setPaymentMethod('card')}>
+                  <RadioGroupItem value="card" id="card" />
+                  <Label htmlFor="card" className="flex-1 cursor-pointer flex items-center gap-3">
+                    <CreditCard className="h-5 w-5" />
+                    <span>Credit/Debit Card</span>
+                  </Label>
+                </div>
 
-              <div className="mt-3 flex items-center space-x-2 rounded-md border p-3">
-                <RadioGroupItem value="cash" id="cash" />
-                <Label htmlFor="cash" className="flex items-center">
-                  <Wallet className="mr-2 h-4 w-4" />
-                  Cash
-                </Label>
-              </div>
-            </RadioGroup>
+                <div className="flex items-center space-x-3 rounded-md border p-4 cursor-pointer hover:bg-muted transition-colors mt-3" onClick={() => setPaymentMethod('cash')}>
+                  <RadioGroupItem value="cash" id="cash" />
+                  <Label htmlFor="cash" className="flex-1 cursor-pointer flex items-center gap-3">
+                    <Wallet className="h-5 w-5" />
+                    <span>Cash</span>
+                  </Label>
+                </div>
+              </RadioGroup>
 
-            <Button className="mt-6 w-full" size="lg" onClick={handlePayment}>
-              Complete Payment
-            </Button>
+              <Separator className="my-4" />
+
+              <Button className="w-full" size="lg" onClick={handlePayment}>
+                Complete Payment
+              </Button>
+            </div>
           </div>
         </div>
       </div>

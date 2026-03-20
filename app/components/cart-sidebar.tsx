@@ -29,12 +29,12 @@ export default function CartSidebar() {
 
   return (
     <div className="flex h-full flex-col bg-background">
-      <div className="flex items-center justify-between border-b p-4">
+      <div className="flex items-center justify-between border-b p-4 pr-8">
         <h2 className="flex items-center text-lg font-semibold">
           <ShoppingCart className="mr-2 h-5 w-5" />
           Cart
         </h2>
-        <span className="rounded-full bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
+        <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
           {itemCount} items
         </span>
       </div>

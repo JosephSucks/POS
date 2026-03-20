@@ -94,9 +94,9 @@ function SuccessContent() {
   const status = orderData.paymentMethod === 'cash' ? 'completed' : 'pending'
 
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="container mx-auto max-w-md">
-      <div className="rounded-lg border p-6 print:border-none bg-card">
+    <div className="min-h-screen bg-background py-8 flex items-center justify-center">
+      <div className="w-full max-w-md px-4">
+      <div className="rounded-lg border shadow-lg p-6 print:border-none print:shadow-none bg-card">
         {/* Receipt Header with Logo */}
         <div className="mb-6 text-center print:mb-4">
           {receiptSettings?.showLogo && (
@@ -113,7 +113,7 @@ function SuccessContent() {
 
         {/* Custom Receipt Header Message */}
         {receiptSettings?.receiptHeader && (
-          <div className="mb-4 border-t border-b py-2 text-center">
+          <div className="mb-4 border-t border-b py-3 text-center">
             <p className="text-xs italic text-muted-foreground">{receiptSettings.receiptHeader}</p>
           </div>
         )}
@@ -125,15 +125,15 @@ function SuccessContent() {
         </div>
 
         <h1 className="mb-2 text-center text-2xl font-bold">Payment Successful</h1>
-        <p className="mb-6 text-center text-muted-foreground">Thank you for your purchase!</p>
+        <p className="mb-6 text-center text-sm text-muted-foreground">Thank you for your purchase!</p>
 
         <div className="mb-6 text-center">
-          <p className="font-medium">Order #{orderData.orderId}</p>
-          <p className="text-sm text-muted-foreground">{date}</p>
+          <p className="font-medium text-sm">Order #{orderData.orderId}</p>
+          <p className="text-xs text-muted-foreground mt-1">{date}</p>
         </div>
         
         {/* Payment Method and Status */}
-        <div className="mb-4 flex items-center justify-center gap-4">
+        <div className="mb-6 flex flex-col items-center justify-center gap-2">
           <div className="flex items-center gap-2">
             {orderData.paymentMethod === 'card' ? (
               <CreditCard className="h-4 w-4 text-blue-600" />
@@ -152,9 +152,9 @@ function SuccessContent() {
 
         <Separator className="my-4" />
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {orderData.items.map((item, index) => (
-            <div key={index} className="flex justify-between text-sm">
+            <div key={index} className="flex justify-between text-xs">
               <div>
                 <p>
                   {item.name} × {item.quantity}
@@ -167,7 +167,7 @@ function SuccessContent() {
 
         <Separator className="my-4" />
 
-        <div className="space-y-2 text-sm">
+        <div className="space-y-2 text-xs">
           <div className="flex justify-between">
             <p>Subtotal</p>
             <p>${orderData.subtotal.toFixed(2)}</p>
@@ -182,7 +182,7 @@ function SuccessContent() {
               <p>-${orderData.discount.toFixed(2)}</p>
             </div>
           )}
-          <div className="flex justify-between font-bold">
+          <div className="flex justify-between font-bold text-sm">
             <p>Total</p>
             <p>${orderData.total.toFixed(2)}</p>
           </div>
@@ -190,17 +190,17 @@ function SuccessContent() {
 
         {/* Custom Receipt Footer Message */}
         {receiptSettings?.receiptFooter && (
-          <div className="mt-4 border-t pt-3 text-center">
+          <div className="mt-6 border-t pt-3 text-center">
             <p className="text-xs italic text-muted-foreground">{receiptSettings.receiptFooter}</p>
           </div>
         )}
 
         <div className="mt-6 flex flex-col gap-3 print:hidden">
-          <Button onClick={handlePrint} variant="outline" className="w-full">
+          <Button onClick={handlePrint} variant="outline" className="w-full text-sm">
             <Printer className="mr-2 h-4 w-4" />
             Print Receipt
           </Button>
-          <Button onClick={handleBackToPOS} className="w-full">
+          <Button onClick={handleBackToPOS} className="w-full text-sm">
             Go Back to POS
           </Button>
         </div>
