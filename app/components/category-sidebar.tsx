@@ -43,7 +43,7 @@ const categories: CategoryItem[] = [
 export default function CategorySidebar({ selectedCategory, onSelectCategory }: CategorySidebarProps) {
   return (
     <div className="w-56 border-r bg-background p-4">
-      <h2 className="mb-4 text-lg font-semibold">Categories</h2>
+      <h2 className="mb-4 text-lg font-semibold">Joseph POS</h2>
       <div className="grid gap-3">
         {categories.map((category) => {
           const Icon = category.icon
