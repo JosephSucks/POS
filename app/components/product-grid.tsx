@@ -8,7 +8,6 @@ import useSWR from "swr"
 import { Card, CardContent } from "@/components/ui/card"
 import { useCart } from "../context/cart-context"
 import type { Product } from "../context/cart-context"
-import { Badge } from "@/components/ui/badge"
 
 interface ProductGridProps {
   category: string
@@ -97,22 +96,9 @@ export default function ProductGrid({ category, searchQuery }: ProductGridProps)
                   </div>
                   <CardContent className="p-3 space-y-1">
                     <h3 className="font-semibold text-sm line-clamp-2 leading-tight">{product.name}</h3>
-                    <div className="flex items-center justify-between">
-                      <p className="text-base font-bold text-primary">${product.price.toFixed(2)}</p>
-                      {!isSoldOut ? (
-                        product.quantity > 0 && (
-                          <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded-full">
-                            {product.quantity} in cart
-                          </span>
-                        )
-                      ) : (
-                        <Badge variant="destructive" className="text-xs">
-                          Out of Stock
-                        </Badge>
-                      )}
-                    </div>
+                    <p className="text-base font-bold text-primary">${product.price.toFixed(2)}</p>
                     {!isSoldOut && product.stock && product.stock < 10 && (
-                      <p className="text-xs text-amber-600 dark:text-amber-400">Only {product.stock} left</p>
+                      <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Only {product.stock} left</p>
                     )}
                   </CardContent>
                 </Card>
