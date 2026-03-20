@@ -8,6 +8,7 @@ export interface Product {
   price: number
   image: string
   category: string
+  stock?: number
 }
 
 interface Discount {
@@ -116,8 +117,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [customer, isHydrated])
 
   const addToCart = (product: Product) => {
+    // Prevent adding if stock is 0 or not available
+    if (!product.stock || product.stock <= 0) {
+      console.log('[v0] Cannot add sold-out product:', product.name)
+      return
+    }
+
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id)
+      
+      // Check if adding would exceed available stock
+      const currentQuantity = existingItem?.quantity || 0
+      if (currentQuantity + 1 > product.stock) {
+        console.log('[v0] Cannot exceed stock limit for:', product.name, 'Available:', product.stock, 'Requested:', currentQuantity + 1)
+        return prevCart
+      }
 
       if (existingItem) {
         return prevCart.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item))
@@ -134,6 +148,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const updateQuantity = (productId: number, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(productId)
+      return
+    }
+
+    // Find the product to check stock limit
+    const product = cart.find(item => item.id === productId)
+    if (product && quantity > (product.stock || 0)) {
+      console.log('[v0] Cannot exceed stock limit. Available:', product.stock, 'Requested:', quantity)
       return
     }
 
