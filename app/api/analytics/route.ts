@@ -77,7 +77,7 @@ export async function GET(request: Request) {
         AND created_at >= ${currentPeriodStart.toISOString()}
     `
 
-    // Get top products
+    // Get top products with previous period data for growth calculation
     const topProducts = await sql`
       SELECT 
         p.id,
@@ -91,6 +91,25 @@ export async function GET(request: Request) {
       ORDER BY revenue DESC
       LIMIT 5
     `
+
+    // Get previous period product data for growth comparison
+    const previousPeriodProducts = await sql`
+      SELECT 
+        p.id,
+        COALESCE(SUM(oi.subtotal), 0) as revenue
+      FROM products p
+      LEFT JOIN order_items oi ON p.id = oi.product_id
+      LEFT JOIN orders o ON oi.order_id = o.id 
+        AND o.created_at >= ${previousPeriodStart.toISOString()}
+        AND o.created_at < ${currentPeriodStart.toISOString()}
+      GROUP BY p.id
+    `
+
+    // Create a map for quick lookup of previous period revenue
+    const previousProductMap = new Map()
+    previousPeriodProducts.forEach((p: any) => {
+      previousProductMap.set(p.id, Number(p.revenue) || 0)
+    })
 
     // Get sales by category
     const salesByCategory = await sql`
@@ -158,13 +177,21 @@ export async function GET(request: Request) {
         previous: previousAvgOrder,
         growth: avgOrderGrowth
       },
-      topProducts: topProducts.map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        revenue: Number(p.revenue) || 0,
-        quantity: Number(p.quantity) || 0,
-        growth: Math.random() * 30 - 5
-      })),
+      topProducts: topProducts.map((p: any) => {
+        const currentRevenue = Number(p.revenue) || 0
+        const previousRevenue = previousProductMap.get(p.id) || 0
+        const productGrowth = previousRevenue > 0 
+          ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 
+          : (currentRevenue > 0 ? 100 : 0)
+        
+        return {
+          id: p.id,
+          name: p.name,
+          revenue: currentRevenue,
+          quantity: Number(p.quantity) || 0,
+          growth: productGrowth
+        }
+      }),
       salesByCategory: salesByCategory.map((c: any) => ({
         category: c.category,
         revenue: Number(c.revenue) || 0,

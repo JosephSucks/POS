@@ -26,7 +26,10 @@ export async function GET() {
         p.name, 
         CAST(p.price AS FLOAT) as price, 
         p.image_url as image, 
-        c.name as category
+        c.name as category,
+        p.stock,
+        p.reorder_level,
+        p.stock_updated_at
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       ORDER BY p.id
@@ -54,7 +57,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, price, description, image_url, category_id } = body
+    const { name, price, description, image_url, category_id, stock, reorder_level } = body
 
     // Validate required fields
     if (!name || price === undefined) {
@@ -93,9 +96,9 @@ export async function POST(request: Request) {
     }
 
     const result = await sql`
-      INSERT INTO products (name, price, description, image_url, category_id, created_at, updated_at)
-      VALUES (${name}, ${price}, ${description || null}, ${image_url || null}, ${resolvedCategoryId}, NOW(), NOW())
-      RETURNING id, name, CAST(price AS FLOAT) as price, description, image_url, category_id, created_at, updated_at
+      INSERT INTO products (name, price, description, image_url, category_id, stock, reorder_level, created_at, updated_at)
+      VALUES (${name}, ${price}, ${description || null}, ${image_url || null}, ${resolvedCategoryId}, ${stock || 0}, ${reorder_level || 10}, NOW(), NOW())
+      RETURNING id, name, CAST(price AS FLOAT) as price, description, image_url, category_id, stock, reorder_level, created_at, updated_at
     `
 
     console.log('[v0] Product created successfully:', result[0])

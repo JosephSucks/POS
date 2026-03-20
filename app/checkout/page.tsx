@@ -76,7 +76,7 @@ export default function CheckoutPage() {
       const result = await response.json()
       console.log('[v0] Payment successful, order ID:', result.orderId)
       
-      // Redirect to success page with order info
+      // Build success URL with order info - BEFORE clearing cart
       const successParams = new URLSearchParams({
         orderId: result.orderId.toString(),
         total: grandTotal.toFixed(2),
@@ -92,11 +92,14 @@ export default function CheckoutPage() {
         })))
       })
       
-      console.log('[v0] Clearing cart and redirecting to success')
-      // Clear cart and redirect
+      const successUrl = `/success?${successParams.toString()}`
+      console.log('[v0] Redirecting to success page:', successUrl)
+      
+      // Clear cart first
       clearCart()
-      // Note: customer is NOT cleared, they remain selected for the next order
-      router.push(`/success?${successParams.toString()}`)
+      
+      // Then redirect immediately using router.push (faster than window.location)
+      router.push(successUrl)
     } catch (error) {
       console.error('[v0] Checkout error:', error)
       alert('Failed to process payment. Please try again.')
@@ -115,8 +118,8 @@ export default function CheckoutPage() {
     )
   }
 
-  // Only show empty cart AFTER hydration is complete
-  if (!isHydrated || cart.length === 0) {
+  // Only show empty cart if we have hydrated AND cart is actually empty
+  if (cart.length === 0 && isHydrated) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center">

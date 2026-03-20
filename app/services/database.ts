@@ -170,9 +170,9 @@ class DatabaseService {
 
       for (const item of transaction.items) {
         await sql`
-          UPDATE inventory 
-          SET quantity = quantity - ${item.quantity}
-          WHERE product_id = ${item.id}
+          UPDATE products 
+          SET stock = stock - ${item.quantity}, stock_updated_at = NOW()
+          WHERE id = ${item.id}
         `
       }
     } catch (error) {
@@ -218,10 +218,9 @@ class DatabaseService {
     try {
       const result = await sql`
         SELECT p.id, p.name, p.price, p.image_url as image, c.name as category, 
-               i.quantity as stock, i.reorder_level as lowStockThreshold
+               p.stock, p.reorder_level as lowStockThreshold
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
-        LEFT JOIN inventory i ON p.id = i.product_id
         ORDER BY p.id
       `
       return result as any
@@ -234,9 +233,9 @@ class DatabaseService {
   async updateStock(productId: number, quantity: number): Promise<void> {
     try {
       await sql`
-        UPDATE inventory 
-        SET quantity = quantity - ${quantity}
-        WHERE product_id = ${productId}
+        UPDATE products 
+        SET stock = stock - ${quantity}, stock_updated_at = NOW()
+        WHERE id = ${productId}
       `
     } catch (error) {
       console.error('[v0] Error updating stock:', error)
@@ -248,12 +247,11 @@ class DatabaseService {
     try {
       const result = await sql`
         SELECT p.id, p.name, p.price, p.image_url as image, c.name as category, 
-               i.quantity as stock, i.reorder_level as lowStockThreshold
+               p.stock, p.reorder_level as lowStockThreshold
         FROM products p
         LEFT JOIN categories c ON p.category_id = c.id
-        LEFT JOIN inventory i ON p.id = i.product_id
-        WHERE i.quantity <= i.reorder_level
-        ORDER BY i.quantity ASC
+        WHERE p.stock <= p.reorder_level
+        ORDER BY p.stock ASC
       `
       return result as any
     } catch (error) {

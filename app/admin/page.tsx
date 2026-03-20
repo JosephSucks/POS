@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react"
 import {
-  TrendingUp,
-  TrendingDown,
   DollarSign,
   ShoppingCart,
   Users,
@@ -11,24 +9,29 @@ import {
   AlertTriangle,
   Eye,
   BarChart3,
+  ArrowRight,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
+import { useRouter } from "next/navigation"
+
+interface InventoryItem {
+  id: number
+  name: string
+  stock: number
+  lowStockThreshold: number
+}
 
 interface DashboardStats {
   totalSales: number
   totalOrders: number
   totalCustomers: number
   lowStockItems: number
-  salesGrowth: number
-  orderGrowth: number
   topProducts: Array<{
     id: number
     name: string
     sales: number
-    growth: number
   }>
   recentOrders: Array<{
     id: string
@@ -37,24 +40,25 @@ interface DashboardStats {
     status: string
     timestamp: Date
   }>
+  lowStockItemsList: InventoryItem[]
 }
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [timeRange, setTimeRange] = useState("7d")
+  const router = useRouter()
 
   useEffect(() => {
     loadDashboardData()
-  }, [timeRange])
+  }, [])
 
   const loadDashboardData = async () => {
     setLoading(true)
     setError(null)
     try {
-      console.log('[v0] Fetching dashboard data with timeRange:', timeRange)
-      const response = await fetch(`/api/admin/dashboard?timeRange=${timeRange}`)
+      console.log('[v0] Fetching TODAY dashboard data')
+      const response = await fetch('/api/admin/dashboard')
       
       console.log('[v0] Dashboard response status:', response.status)
       
@@ -76,16 +80,14 @@ export default function AdminDashboard() {
       console.error("[v0] Failed to load dashboard data:", err)
       const errorMsg = err instanceof Error ? err.message : 'Failed to load dashboard'
       setError(errorMsg)
-      // Set default empty stats so page can still render
       setStats({
         totalSales: 0,
         totalOrders: 0,
         totalCustomers: 0,
         lowStockItems: 0,
-        salesGrowth: 0,
-        orderGrowth: 0,
         topProducts: [],
         recentOrders: [],
+        lowStockItemsList: [],
       })
     } finally {
       setLoading(false)
@@ -96,7 +98,13 @@ export default function AdminDashboard() {
     return (
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl lg:text-3xl font-bold">Dashboard</h1>
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold">Dashboard</h1>
+            <p className="text-sm text-muted-foreground mt-1">Today's Overview</p>
+          </div>
+          <Button onClick={loadDashboardData} variant="outline" size="sm">
+            Refresh
+          </Button>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
@@ -137,94 +145,112 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h1 className="text-2xl lg:text-3xl font-bold">Dashboard</h1>
-        <div className="flex gap-2">
-          {["7d", "30d", "90d"].map((range) => (
-            <Button
-              key={range}
-              variant={timeRange === range ? "default" : "outline"}
-              size="sm"
-              onClick={() => setTimeRange(range)}
-            >
-              {range === "7d" ? "7 Days" : range === "30d" ? "30 Days" : "90 Days"}
-            </Button>
-          ))}
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">Today's Overview</p>
         </div>
+        <Button onClick={loadDashboardData} variant="outline" size="sm">
+          Refresh
+        </Button>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards - TODAY ONLY */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+            <CardTitle className="text-sm font-medium">Today's Sales</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${stats.totalSales.toFixed(2)}</div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              {stats.salesGrowth >= 0 ? (
-                <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-              ) : (
-                <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-              )}
-              <span className={stats.salesGrowth >= 0 ? "text-green-500" : "text-red-500"}>
-                {Math.abs(stats.salesGrowth).toFixed(1)}%
-              </span>
-              <span className="ml-1">from last period</span>
-            </div>
+            <p className="text-xs text-muted-foreground mt-1">Total revenue today</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
+            <CardTitle className="text-sm font-medium">Today's Orders</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalOrders}</div>
-            <div className="flex items-center text-xs text-muted-foreground">
-              {stats.orderGrowth >= 0 ? (
-                <TrendingUp className="h-3 w-3 text-green-500 mr-1" />
-              ) : (
-                <TrendingDown className="h-3 w-3 text-red-500 mr-1" />
-              )}
-              <span className={stats.orderGrowth >= 0 ? "text-green-500" : "text-red-500"}>
-                {Math.abs(stats.orderGrowth).toFixed(1)}%
-              </span>
-              <span className="ml-1">from last period</span>
-            </div>
+            <p className="text-xs text-muted-foreground mt-1">Transactions completed</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+            <CardTitle className="text-sm font-medium">Today's Customers</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalCustomers}</div>
-            <p className="text-xs text-muted-foreground">Active customer base</p>
+            <p className="text-xs text-muted-foreground mt-1">Unique customers</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-500">{stats.lowStockItems}</div>
-            <p className="text-xs text-muted-foreground">Items need restocking</p>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.lowStockItems}</div>
+            <p className="text-xs text-red-600 dark:text-red-400 mt-1">Items need restocking</p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Primary Action: Low Stock Items */}
+      {stats.lowStockItemsList && stats.lowStockItemsList.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Low Stock Items - Action Required</span>
+              <Badge variant="destructive">{stats.lowStockItemsList.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {stats.lowStockItemsList.map((item) => (
+                <div key={item.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-950 rounded border border-amber-200 dark:border-amber-900">
+                  <div>
+                    <p className="font-medium text-sm">{item.name}</p>
+                    <p className="text-xs text-amber-700 dark:text-amber-400">
+                      Stock: {item.stock} / Threshold: {item.lowStockThreshold}
+                    </p>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => router.push('/admin/products')}
+                    className="gap-1"
+                  >
+                    Reorder
+                    <ArrowRight className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+              {stats.lowStockItemsList.length > 10 && (
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => router.push('/admin/products')}
+                >
+                  View All Low Stock Items ({stats.lowStockItems} total)
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Charts and Tables */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Top Products */}
+        {/* Top Products Today */}
         <Card>
           <CardHeader>
-            <CardTitle>Top Performing Products</CardTitle>
+            <CardTitle>Top Products - Today</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -237,35 +263,27 @@ export default function AdminDashboard() {
                       </div>
                       <div>
                         <p className="font-medium text-sm">{product.name}</p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground">${product.sales.toFixed(2)}</span>
-                          {product.growth >= 0 ? (
-                            <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
-                              +{product.growth.toFixed(1)}%
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="text-xs bg-red-100 text-red-700">
-                              {product.growth.toFixed(1)}%
-                            </Badge>
-                          )}
-                        </div>
+                        <p className="text-xs text-muted-foreground">${product.sales.toFixed(2)}</p>
                       </div>
                     </div>
-                    <Progress value={(product.sales / stats.topProducts[0].sales) * 100} className="w-20" />
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">No products sold yet</p>
+                <p className="text-sm text-muted-foreground">No sales yet today</p>
               )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Recent Orders */}
+        {/* Recent Orders Today */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Orders</CardTitle>
-            <Button variant="outline" size="sm">
+            <CardTitle>Recent Orders - Today</CardTitle>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => router.push('/admin/orders')}
+            >
               <Eye className="h-4 w-4 mr-2" />
               View All
             </Button>
@@ -274,21 +292,21 @@ export default function AdminDashboard() {
             <div className="space-y-4">
               {stats.recentOrders.length > 0 ? (
                 stats.recentOrders.map((order) => (
-                  <div key={order.id} className="flex items-center justify-between">
+                  <div key={order.id} className="flex items-center justify-between pb-3 border-b last:border-0">
                     <div>
                       <p className="font-medium text-sm">#{order.id}</p>
                       <p className="text-xs text-muted-foreground">{order.customer}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-sm">${order.total.toFixed(2)}</p>
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs mt-1">
                         {order.status}
                       </Badge>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">No orders yet</p>
+                <p className="text-sm text-muted-foreground">No orders yet today</p>
               )}
             </div>
           </CardContent>
@@ -302,19 +320,34 @@ export default function AdminDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Button className="h-20 flex-col gap-2">
+            <Button 
+              className="h-20 flex-col gap-2"
+              onClick={() => router.push('/admin/products')}
+            >
               <Package className="h-6 w-6" />
               Add Product
             </Button>
-            <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col gap-2 bg-transparent"
+              onClick={() => router.push('/admin/orders')}
+            >
               <ShoppingCart className="h-6 w-6" />
               View Orders
             </Button>
-            <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col gap-2 bg-transparent"
+              onClick={() => router.push('/admin/customers')}
+            >
               <Users className="h-6 w-6" />
               Manage Customers
             </Button>
-            <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent">
+            <Button 
+              variant="outline" 
+              className="h-20 flex-col gap-2 bg-transparent"
+              onClick={() => router.push('/admin/analytics')}
+            >
               <BarChart3 className="h-6 w-6" />
               View Analytics
             </Button>

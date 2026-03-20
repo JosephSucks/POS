@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { PlusCircle } from "lucide-react"
+import { PlusCircle, AlertCircle } from "lucide-react"
 import { useEffect, useState } from "react"
 import useSWR from "swr"
 
@@ -63,37 +63,47 @@ export default function ProductGrid({ category, searchQuery }: ProductGridProps)
             </div>
           ) : (
             <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 auto-rows-max">
-              {filteredProducts.map((product) => (
+              {filteredProducts.map((product) => {
+                const isSoldOut = !product.stock || product.stock <= 0
+                
+                return (
                 <Card
                   key={product.id}
-                  className="overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-primary cursor-pointer group"
-                  onClick={() => addToCart(product)}
+                  className={`overflow-hidden transition-all duration-200 ${!isSoldOut ? 'hover:shadow-lg hover:border-primary cursor-pointer group' : 'opacity-60 cursor-not-allowed'}`}
+                  onClick={() => !isSoldOut && addToCart(product)}
                 >
                   <div className="relative aspect-square bg-muted overflow-hidden">
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors duration-200 z-10">
-                      <PlusCircle className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    {isSoldOut && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/60 z-20">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <AlertCircle className="h-8 w-8 text-white" />
+                          <span className="text-white font-bold text-center text-sm">SOLD OUT</span>
+                        </div>
+                      </div>
+                    )}
+                    <div className={`absolute inset-0 flex items-center justify-center ${isSoldOut ? 'bg-black/0' : 'bg-black/0 group-hover:bg-black/40'} transition-colors duration-200 z-10`}>
+                      {!isSoldOut && (
+                        <PlusCircle className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                      )}
                     </div>
                     <Image 
                       src={product.image || "/placeholder.svg"} 
                       alt={product.name} 
                       fill 
-                      className="object-cover group-hover:scale-110 transition-transform duration-200"
+                      className={`object-cover ${!isSoldOut ? 'group-hover:scale-110' : ''} transition-transform duration-200`}
                       sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 16vw"
                     />
                   </div>
                   <CardContent className="p-3 space-y-1">
                     <h3 className="font-semibold text-sm line-clamp-2 leading-tight">{product.name}</h3>
-                    <div className="flex items-center justify-between">
-                      <p className="text-base font-bold text-primary">${product.price.toFixed(2)}</p>
-                      {product.quantity > 0 && (
-                        <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded-full">
-                          {product.quantity} in cart
-                        </span>
-                      )}
-                    </div>
+                    <p className="text-base font-bold text-primary">${product.price.toFixed(2)}</p>
+                    {!isSoldOut && product.stock && product.stock < 10 && (
+                      <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">Only {product.stock} left</p>
+                    )}
                   </CardContent>
                 </Card>
-              ))}
+              )
+              })}
             </div>
           )}
         </>
