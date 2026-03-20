@@ -29,14 +29,14 @@ export default function CartSidebar() {
 
   return (
     <div className="flex h-full flex-col bg-background">
-      <div className="flex items-center border-b p-4 gap-2">
-        <h2 className="flex items-center text-lg font-semibold flex-1">
-          <ShoppingCart className="mr-2 h-5 w-5 flex-shrink-0" />
-          <span className="truncate">Cart</span>
+      <div className="flex items-center border-b p-4">
+        <h2 className="flex items-center text-lg font-semibold">
+          <ShoppingCart className="mr-2 h-5 w-5" />
+          <span>Cart</span>
+          <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+            {itemCount}
+          </span>
         </h2>
-        <span className="rounded-full bg-primary px-2 py-1 text-xs font-medium text-primary-foreground flex-shrink-0">
-          {itemCount}
-        </span>
       </div>
 
       {/* Customer Section */}
