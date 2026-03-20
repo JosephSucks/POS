@@ -40,7 +40,7 @@ export default function ProductGrid({ category, searchQuery }: ProductGridProps)
   }))
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+    <div className="w-full">
       {isLoading ? (
         <div className="col-span-full py-12 text-center text-muted-foreground">
           Loading products...
@@ -57,30 +57,43 @@ export default function ProductGrid({ category, searchQuery }: ProductGridProps)
         </div>
       ) : (
         <>
-          {filteredProducts.map((product) => (
-            <Card
-              key={product.id}
-              className="overflow-hidden transition-all duration-200 hover:scale-105 hover:shadow-md cursor-pointer group"
-              onClick={() => addToCart(product)}
-            >
-              <div className="relative aspect-square">
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 z-10">
-                  <PlusCircle className="h-10 w-10 text-white" />
-                </div>
-                <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-cover" />
-              </div>
-              <CardContent className="p-3">
-                <div>
-                  <h3 className="font-medium line-clamp-1">{product.name}</h3>
-                  <p className="text-sm text-muted-foreground">${product.price.toFixed(2)}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-
-          {filteredProducts.length === 0 && allProducts.length > 0 && (
+          {filteredProducts.length === 0 && allProducts.length > 0 ? (
             <div className="col-span-full py-12 text-center">
               <p className="text-muted-foreground">No products match your search</p>
+            </div>
+          ) : (
+            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 auto-rows-max">
+              {filteredProducts.map((product) => (
+                <Card
+                  key={product.id}
+                  className="overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-primary cursor-pointer group"
+                  onClick={() => addToCart(product)}
+                >
+                  <div className="relative aspect-square bg-muted overflow-hidden">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors duration-200 z-10">
+                      <PlusCircle className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    </div>
+                    <Image 
+                      src={product.image || "/placeholder.svg"} 
+                      alt={product.name} 
+                      fill 
+                      className="object-cover group-hover:scale-110 transition-transform duration-200"
+                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1280px) 20vw, 16vw"
+                    />
+                  </div>
+                  <CardContent className="p-3 space-y-1">
+                    <h3 className="font-semibold text-sm line-clamp-2 leading-tight">{product.name}</h3>
+                    <div className="flex items-center justify-between">
+                      <p className="text-base font-bold text-primary">${product.price.toFixed(2)}</p>
+                      {product.quantity > 0 && (
+                        <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded-full">
+                          {product.quantity} in cart
+                        </span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </>
