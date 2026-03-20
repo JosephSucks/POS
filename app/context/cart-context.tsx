@@ -19,13 +19,13 @@ interface Discount {
 }
 
 interface Customer {
-  id: string
+  id: number
   name: string
   email: string
   phone: string
   loyaltyPoints: number
   totalSpent: number
-  purchaseHistory: Transaction[]
+  purchaseHistory?: Transaction[]
 }
 
 interface Transaction {
@@ -67,23 +67,53 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([])
   const [appliedDiscount, setAppliedDiscount] = useState<Discount | null>(null)
   const [customer, setCustomer] = useState<Customer | null>(null)
+  const [isHydrated, setIsHydrated] = useState(false)
 
-  // Load cart from localStorage on initial render
+  // Load cart and customer from localStorage on initial render
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    
     const savedCart = localStorage.getItem("cart")
     if (savedCart) {
       try {
-        setCart(JSON.parse(savedCart))
+        const parsedCart = JSON.parse(savedCart)
+        console.log('[v0] Loaded cart from localStorage:', parsedCart.length, 'items')
+        setCart(parsedCart)
       } catch (error) {
         console.error("Failed to parse cart from localStorage:", error)
       }
     }
+    
+    const savedCustomer = localStorage.getItem("selectedCustomer")
+    if (savedCustomer) {
+      try {
+        const parsedCustomer = JSON.parse(savedCustomer)
+        console.log('[v0] Loaded customer from localStorage:', parsedCustomer.name)
+        setCustomer(parsedCustomer)
+      } catch (error) {
+        console.error("Failed to parse customer from localStorage:", error)
+      }
+    }
+    
+    // Mark hydration as complete so we can start saving
+    setIsHydrated(true)
   }, [])
 
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage ONLY after hydration is complete
   useEffect(() => {
+    if (typeof window === 'undefined' || !isHydrated) return
     localStorage.setItem("cart", JSON.stringify(cart))
-  }, [cart])
+  }, [cart, isHydrated])
+
+  // Save customer to localStorage ONLY after hydration is complete
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isHydrated) return
+    if (customer) {
+      localStorage.setItem("selectedCustomer", JSON.stringify(customer))
+    } else {
+      localStorage.removeItem("selectedCustomer")
+    }
+  }, [customer, isHydrated])
 
   const addToCart = (product: Product) => {
     setCart((prevCart) => {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Package, Download } from "lucide-react"
+import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Package, Download, UserCheck, UserX } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -51,6 +51,10 @@ interface AnalyticsData {
     percentage: number
     revenue: number
   }>
+  spendingBreakdown?: {
+    guest: { revenue: number; orders: number }
+    registered: { revenue: number; orders: number }
+  }
 }
 
 export default function AnalyticsPage() {
@@ -65,123 +69,12 @@ export default function AnalyticsPage() {
   const loadAnalytics = async () => {
     setLoading(true)
     try {
-      // Simulate loading analytics data
-      const transactions = await db.getTransactions()
-      const customers = await db.getCustomers()
-
-      // Calculate date ranges
-      const endDate = new Date()
-      const startDate = new Date()
-      const days = timeRange === "7d" ? 7 : timeRange === "30d" ? 30 : 90
-      startDate.setDate(endDate.getDate() - days)
-
-      const previousStartDate = new Date(startDate)
-      previousStartDate.setDate(previousStartDate.getDate() - days)
-
-      // Filter transactions for current and previous periods
-      const currentTransactions = transactions.filter((t) => {
-        const date = new Date(t.timestamp)
-        return date >= startDate && date <= endDate
-      })
-
-      const previousTransactions = transactions.filter((t) => {
-        const date = new Date(t.timestamp)
-        return date >= previousStartDate && date < startDate
-      })
-
-      // Calculate metrics
-      const currentRevenue = currentTransactions.reduce((sum, t) => sum + t.total, 0)
-      const previousRevenue = previousTransactions.reduce((sum, t) => sum + t.total, 0)
-      const revenueGrowth = previousRevenue > 0 ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 : 0
-
-      const currentOrders = currentTransactions.length
-      const previousOrders = previousTransactions.length
-      const ordersGrowth = previousOrders > 0 ? ((currentOrders - previousOrders) / previousOrders) * 100 : 0
-
-      const currentCustomers = customers.length
-      const previousCustomers = Math.max(1, currentCustomers - Math.floor(Math.random() * 10))
-      const customersGrowth = ((currentCustomers - previousCustomers) / previousCustomers) * 100
-
-      const currentAvgOrder = currentOrders > 0 ? currentRevenue / currentOrders : 0
-      const previousAvgOrder = previousOrders > 0 ? previousRevenue / previousOrders : 0
-      const avgOrderGrowth = previousAvgOrder > 0 ? ((currentAvgOrder - previousAvgOrder) / previousAvgOrder) * 100 : 0
-
-      // Calculate top products
-      const productSales = new Map()
-      currentTransactions.forEach((transaction) => {
-        transaction.items.forEach((item) => {
-          const existing = productSales.get(item.id) || { name: item.name, revenue: 0, quantity: 0 }
-          existing.revenue += item.total
-          existing.quantity += item.quantity
-          productSales.set(item.id, existing)
-        })
-      })
-
-      const topProducts = Array.from(productSales.entries())
-        .map(([id, data]) => ({ id: Number(id), ...data, growth: Math.random() * 40 - 10 }))
-        .sort((a, b) => b.revenue - a.revenue)
-        .slice(0, 5)
-
-      // Calculate sales by category
-      const categorySales = new Map()
-      currentTransactions.forEach((transaction) => {
-        transaction.items.forEach((item) => {
-          // Mock category assignment
-          const category = ["food", "drinks", "desserts"][Math.floor(Math.random() * 3)]
-          const existing = categorySales.get(category) || 0
-          categorySales.set(category, existing + item.total)
-        })
-      })
-
-      const totalCategoryRevenue = Array.from(categorySales.values()).reduce((sum, val) => sum + val, 0)
-      const salesByCategory = Array.from(categorySales.entries()).map(([category, revenue]) => ({
-        category,
-        revenue,
-        percentage: totalCategoryRevenue > 0 ? (revenue / totalCategoryRevenue) * 100 : 0,
-      }))
-
-      // Generate mock revenue by day
-      const revenueByDay = Array.from({ length: Math.min(days, 30) }, (_, i) => {
-        const date = new Date(startDate)
-        date.setDate(date.getDate() + i)
-        return {
-          date: date.toISOString().split("T")[0],
-          revenue: Math.random() * 1000 + 200,
-        }
-      })
-
-      // Mock customer segments
-      const customerSegments = [
-        {
-          segment: "New Customers",
-          count: Math.floor(currentCustomers * 0.3),
-          percentage: 30,
-          revenue: currentRevenue * 0.2,
-        },
-        {
-          segment: "Regular Customers",
-          count: Math.floor(currentCustomers * 0.5),
-          percentage: 50,
-          revenue: currentRevenue * 0.6,
-        },
-        {
-          segment: "VIP Customers",
-          count: Math.floor(currentCustomers * 0.2),
-          percentage: 20,
-          revenue: currentRevenue * 0.2,
-        },
-      ]
-
-      setAnalytics({
-        revenue: { current: currentRevenue, previous: previousRevenue, growth: revenueGrowth },
-        orders: { current: currentOrders, previous: previousOrders, growth: ordersGrowth },
-        customers: { current: currentCustomers, previous: previousCustomers, growth: customersGrowth },
-        avgOrderValue: { current: currentAvgOrder, previous: previousAvgOrder, growth: avgOrderGrowth },
-        topProducts,
-        salesByCategory,
-        revenueByDay,
-        customerSegments,
-      })
+      const response = await fetch(`/api/analytics?timeRange=${timeRange}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch analytics')
+      }
+      const data = await response.json()
+      setAnalytics(data)
     } catch (error) {
       console.error("Failed to load analytics:", error)
     } finally {
@@ -390,6 +283,62 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Guest vs Registered Customer Spending */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Guest vs Registered Spending</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-6">
+              {/* Guest Spending */}
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
+                    <UserX className="h-5 w-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Guest Orders</p>
+                    <p className="text-sm text-muted-foreground">
+                      {analytics.spendingBreakdown?.guest.orders || 0} orders
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold">{formatCurrency(analytics.spendingBreakdown?.guest.revenue || 0)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {analytics.revenue.current > 0 
+                      ? ((analytics.spendingBreakdown?.guest.revenue || 0) / analytics.revenue.current * 100).toFixed(1) 
+                      : 0}% of revenue
+                  </p>
+                </div>
+              </div>
+              
+              {/* Registered Customer Spending */}
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+                    <UserCheck className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Registered Customers</p>
+                    <p className="text-sm text-muted-foreground">
+                      {analytics.spendingBreakdown?.registered.orders || 0} orders
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold">{formatCurrency(analytics.spendingBreakdown?.registered.revenue || 0)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {analytics.revenue.current > 0 
+                      ? ((analytics.spendingBreakdown?.registered.revenue || 0) / analytics.revenue.current * 100).toFixed(1) 
+                      : 0}% of revenue
+                  </p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>

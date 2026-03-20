@@ -19,6 +19,7 @@ export async function GET() {
   try {
     console.log('[v0] Fetching orders from database...')
     
+    // Fetch orders with customer info
     const orders = await sql`
       SELECT 
         o.id,
@@ -39,9 +40,49 @@ export async function GET() {
       LIMIT 100
     `
 
-    console.log(`[v0] Successfully fetched ${orders.length} orders`)
+    // Fetch order items for each order
+    const orderIds = orders.map((o: any) => o.id)
     
-    return Response.json(orders)
+    let orderItems: any[] = []
+    if (orderIds.length > 0) {
+      orderItems = await sql`
+        SELECT 
+          oi.order_id,
+          oi.product_id,
+          oi.quantity,
+          oi.unit_price as price,
+          oi.subtotal as total,
+          p.name
+        FROM order_items oi
+        LEFT JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = ANY(${orderIds})
+      `
+    }
+
+    // Group items by order_id
+    const itemsByOrder = orderItems.reduce((acc: any, item: any) => {
+      if (!acc[item.order_id]) {
+        acc[item.order_id] = []
+      }
+      acc[item.order_id].push({
+        id: item.product_id,
+        name: item.name,
+        quantity: item.quantity,
+        price: Number(item.price),
+        total: Number(item.total)
+      })
+      return acc
+    }, {})
+
+    // Merge items into orders
+    const ordersWithItems = orders.map((order: any) => ({
+      ...order,
+      items: itemsByOrder[order.id] || []
+    }))
+
+    console.log(`[v0] Successfully fetched ${orders.length} orders with items`)
+    
+    return Response.json(ordersWithItems)
   } catch (error) {
     console.error('[v0] Error fetching orders:', error)
     return Response.json(

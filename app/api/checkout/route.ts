@@ -21,8 +21,11 @@ export async function POST(request: Request) {
     const transaction: Transaction = await request.json()
 
     console.log('[v0] Saving transaction:', transaction)
+    console.log('[v0] Customer ID being saved:', transaction.customerId)
 
-    // Create order
+    // Create order - cash payments are completed immediately, card payments need manual processing
+    const initialStatus = transaction.paymentMethod === 'cash' ? 'completed' : 'pending'
+    
     const orderResult = await sql`
       INSERT INTO orders (customer_id, subtotal, discount, tax, total, payment_method, status)
       VALUES (
@@ -32,7 +35,7 @@ export async function POST(request: Request) {
         ${transaction.tax},
         ${transaction.total},
         ${transaction.paymentMethod},
-        'completed'
+        ${initialStatus}
       )
       RETURNING id
     `
@@ -52,6 +55,18 @@ export async function POST(request: Request) {
         SET quantity = quantity - ${item.quantity}
         WHERE product_id = ${item.id}
       `
+    }
+
+    // Update customer total_spent if customer_id exists
+    if (transaction.customerId) {
+      await sql`
+        UPDATE customers 
+        SET total_spent = COALESCE(total_spent, 0) + ${transaction.total},
+            loyalty_points = COALESCE(loyalty_points, 0) + ${Math.floor(transaction.total)},
+            updated_at = NOW()
+        WHERE id = ${transaction.customerId}
+      `
+      console.log('[v0] Updated customer spending for customer ID:', transaction.customerId)
     }
 
     console.log('[v0] Transaction saved with order ID:', orderId)

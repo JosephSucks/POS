@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useToast } from "@/hooks/use-toast"
 
 interface ProductFormData {
   name: string
@@ -29,6 +30,7 @@ interface ProductFormData {
 const categories = ["food", "drinks", "desserts", "snacks", "beverages"]
 
 export default function ProductsPage() {
+  const { toast } = useToast()
   const [products, setProducts] = useState<InventoryItem[]>([])
   const [filteredProducts, setFilteredProducts] = useState<InventoryItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -108,31 +110,53 @@ export default function ProductsPage() {
         price: formData.price,
         description: formData.description,
         image_url: formData.image,
-        category_id: formData.category, // Send category as category_id
+        category_id: formData.category,
       }
 
-      const response = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
+      let response
+      if (editingProduct) {
+        // Update existing product
+        response = await fetch(`/api/products/${editingProduct.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+      } else {
+        // Create new product
+        response = await fetch('/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+      }
 
       if (!response.ok) {
         const error = await response.json()
-        alert(`Error: ${error.error || 'Failed to create product'}`)
+        toast({
+          title: "Error",
+          description: error.error || 'Failed to save product',
+          variant: "destructive",
+        })
         return
       }
 
-      const newProduct = await response.json()
-      console.log('[v0] Product created:', newProduct)
+      const result = await response.json()
+      console.log('[v0] Product saved:', result)
       
       // Refresh products list
       await loadProducts()
       resetForm()
-      alert('Product created successfully!')
+      toast({
+        title: editingProduct ? "Product Updated" : "Product Created",
+        description: editingProduct ? 'Product updated successfully!' : 'Product created successfully!',
+      })
     } catch (error) {
       console.error('[v0] Error submitting product:', error)
-      alert('Error creating product')
+      toast({
+        title: "Error",
+        description: 'Error saving product',
+        variant: "destructive",
+      })
     }
   }
 
@@ -160,10 +184,17 @@ export default function ProductsPage() {
         })
         if (!response.ok) throw new Error('Failed to delete product')
         await loadProducts()
-        alert('Product deleted successfully!')
+        toast({
+          title: "Product Deleted",
+          description: 'Product deleted successfully!',
+        })
       } catch (error) {
         console.error('[v0] Error deleting product:', error)
-        alert('Error deleting product')
+        toast({
+          title: "Error",
+          description: 'Error deleting product',
+          variant: "destructive",
+        })
       }
     }
   }

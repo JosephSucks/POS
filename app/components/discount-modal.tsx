@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card, CardContent } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useCart } from "../context/cart-context"
+import { useToast } from "@/hooks/use-toast"
 
 interface Discount {
   id: string
@@ -55,6 +56,7 @@ const predefinedDiscounts: Discount[] = [
 ]
 
 export default function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
+  const { toast } = useToast()
   const { cartTotal, applyDiscount, removeDiscount, appliedDiscount } = useCart()
   const [customDiscount, setCustomDiscount] = useState({
     type: "percentage" as "percentage" | "fixed",
@@ -64,16 +66,28 @@ export default function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
 
   const handleApplyPredefined = (discount: Discount) => {
     if (discount.minAmount && cartTotal < discount.minAmount) {
-      alert(`Minimum order amount of $${discount.minAmount} required for this discount`)
+      toast({
+        title: "Minimum Order Not Met",
+        description: `Minimum order amount of $${discount.minAmount} required for this discount`,
+        variant: "destructive",
+      })
       return
     }
     applyDiscount(discount)
+    toast({
+      title: "Discount Applied",
+      description: `${discount.description}`,
+    })
     onClose()
   }
 
   const handleApplyCustom = () => {
     if (customDiscount.value <= 0 || !customDiscount.description) {
-      alert("Please enter valid discount details")
+      toast({
+        title: "Invalid Discount",
+        description: "Please enter valid discount details",
+        variant: "destructive",
+      })
       return
     }
 
@@ -85,22 +99,30 @@ export default function DiscountModal({ isOpen, onClose }: DiscountModalProps) {
     }
 
     applyDiscount(discount)
+    toast({
+      title: "Discount Applied",
+      description: `${customDiscount.description}`,
+    })
     onClose()
   }
 
   const handleRemoveDiscount = () => {
     removeDiscount()
+    toast({
+      title: "Discount Removed",
+      description: "The discount has been removed from this transaction.",
+    })
     onClose()
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-md max-h-[85vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Apply Discount</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto flex-1 pr-1">
           {appliedDiscount && (
             <Card className="border-green-200 bg-green-50">
               <CardContent className="p-4">

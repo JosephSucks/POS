@@ -64,11 +64,37 @@ export async function POST(request: Request) {
       )
     }
 
-    console.log('[v0] Creating product:', { name, price })
+    console.log('[v0] Creating product - resolving category from:', category_id)
+    let resolvedCategoryId: number | null = null
+    
+    if (category_id !== null && category_id !== undefined && category_id !== '') {
+      // Check if it's already a number
+      const numericId = Number(category_id)
+      if (!isNaN(numericId) && Number.isInteger(numericId)) {
+        resolvedCategoryId = numericId
+      } else if (typeof category_id === 'string') {
+        // It's a category name string, look up the actual ID from the database
+        try {
+          const categoryResult = await sql`
+            SELECT id FROM categories WHERE LOWER(name) = LOWER(${category_id})
+          `
+          if (categoryResult && categoryResult.length > 0) {
+            resolvedCategoryId = categoryResult[0].id
+            console.log('[v0] Found category ID:', resolvedCategoryId, 'for name:', category_id)
+          } else {
+            console.warn('[v0] Category not found for name:', category_id, '- using NULL')
+            resolvedCategoryId = null
+          }
+        } catch (categoryError) {
+          console.error('[v0] Error looking up category:', categoryError)
+          resolvedCategoryId = null
+        }
+      }
+    }
 
     const result = await sql`
       INSERT INTO products (name, price, description, image_url, category_id, created_at, updated_at)
-      VALUES (${name}, ${price}, ${description || null}, ${image_url || null}, ${category_id || null}, NOW(), NOW())
+      VALUES (${name}, ${price}, ${description || null}, ${image_url || null}, ${resolvedCategoryId}, NOW(), NOW())
       RETURNING id, name, CAST(price AS FLOAT) as price, description, image_url, category_id, created_at, updated_at
     `
 

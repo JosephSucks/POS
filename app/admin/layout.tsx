@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
+import AdminPinLock from "@/app/components/admin-pin-lock"
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
@@ -74,8 +75,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="border-t p-4">
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 h-11 text-red-600 hover:text-red-700 hover:bg-red-50"
-          onClick={() => router.push("/")}
+          className="w-full justify-start gap-3 h-11 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
+          onClick={() => router.push("/pos")}
         >
           <LogOut className="h-5 w-5" />
           Back to POS
@@ -85,10 +86,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   )
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <AdminPinLock>
+    <div className="flex h-screen bg-background">
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex lg:flex-shrink-0">
-        <div className="flex w-64 flex-col border-r bg-white">
+        <div className="flex w-64 flex-col border-r bg-card">
           <Sidebar />
         </div>
       </div>
@@ -103,7 +105,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Mobile Header */}
-        <div className="flex h-16 items-center justify-between border-b bg-white px-4 lg:hidden">
+        <div className="flex h-16 items-center justify-between border-b bg-card px-4 lg:hidden">
           <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -124,5 +126,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </main>
       </div>
     </div>
+    </AdminPinLock>
   )
 }

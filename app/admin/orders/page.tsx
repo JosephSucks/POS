@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, Filter, Eye, Printer, RefreshCw, Calendar, DollarSign, Package, MoreHorizontal } from "lucide-react"
+import { Search, Filter, Eye, Printer, RefreshCw, Calendar, DollarSign, Package, MoreHorizontal, CreditCard, Banknote, Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { db, type Transaction } from "../../services/database"
@@ -19,11 +20,11 @@ interface OrderDetails extends Transaction {
 }
 
 const orderStatuses = [
-  { value: "pending", label: "Pending", color: "bg-yellow-100 text-yellow-800" },
-  { value: "processing", label: "Processing", color: "bg-blue-100 text-blue-800" },
-  { value: "completed", label: "Completed", color: "bg-green-100 text-green-800" },
-  { value: "cancelled", label: "Cancelled", color: "bg-red-100 text-red-800" },
-  { value: "refunded", label: "Refunded", color: "bg-gray-100 text-gray-800" },
+  { value: "pending", label: "Pending", color: "bg-orange-100 text-orange-800 border-orange-200" },
+  { value: "processing", label: "Processing", color: "bg-blue-100 text-blue-800 border-blue-200" },
+  { value: "completed", label: "Completed", color: "bg-green-100 text-green-800 border-green-200" },
+  { value: "cancelled", label: "Cancelled", color: "bg-red-100 text-red-800 border-red-200" },
+  { value: "refunded", label: "Refunded", color: "bg-purple-100 text-purple-800 border-purple-200" },
 ]
 export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderDetails[]>([])
@@ -32,6 +33,15 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState("all")
   const [selectedOrder, setSelectedOrder] = useState<OrderDetails | null>(null)
   const [showOrderDetails, setShowOrderDetails] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingOrder, setEditingOrder] = useState<OrderDetails | null>(null)
+  const [editFormData, setEditFormData] = useState({
+    subtotal: 0,
+    tax: 0,
+    discount: 0,
+    total: 0,
+    items: [] as Array<{ id: number; name: string; quantity: number; price: number; total: number }>
+  })
 
   useEffect(() => {
     loadOrders()
@@ -59,9 +69,9 @@ const loadOrders = async () => {
       subtotal: order.subtotal || 0,
       tax: order.tax || 0,
       discount: order.discount || 0,
-      items: [],
+      items: order.items || [],
       timestamp: new Date(order.created_at || Date.now()),
-      customerName: order.customer_name || `Customer ${order.customer_id}`,
+      customerName: order.customer_name || `Customer ${order.customer_id || 'Guest'}`,
       customerEmail: order.customer_email || '',
       paymentMethod: order.payment_method || 'cash',
       status: order.status || 'pending',
@@ -128,9 +138,180 @@ const loadOrders = async () => {
     setShowOrderDetails(true)
   }
 
+  const handleEditOrder = (order: OrderDetails) => {
+    setEditingOrder(order)
+    setEditFormData({
+      subtotal: Number(order.subtotal) || 0,
+      tax: Number(order.tax) || 0,
+      discount: Number(order.discount) || 0,
+      total: Number(order.total) || 0,
+      items: order.items.map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        price: Number(item.price),
+        total: Number(item.total)
+      }))
+    })
+    setShowEditModal(true)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingOrder) return
+    
+    try {
+      const response = await fetch(`/api/orders/${editingOrder.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subtotal: editFormData.subtotal,
+          tax: editFormData.tax,
+          discount: editFormData.discount,
+          total: editFormData.total,
+          items: editFormData.items
+        }),
+      })
+
+      if (!response.ok) throw new Error('Failed to update order')
+      
+      await loadOrders()
+      setShowEditModal(false)
+      setEditingOrder(null)
+    } catch (error) {
+      console.error('[v0] Error updating order:', error)
+      alert('Failed to update order')
+    }
+  }
+
+  const handleDeleteOrder = async (orderId: number) => {
+    if (!confirm("Are you sure you want to delete this order? This action cannot be undone.")) return
+    
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) throw new Error('Failed to delete order')
+      
+      await loadOrders()
+    } catch (error) {
+      console.error('[v0] Error deleting order:', error)
+      alert('Failed to delete order')
+    }
+  }
+
+  const updateItemQuantity = (index: number, newQuantity: number) => {
+    const newItems = [...editFormData.items]
+    newItems[index].quantity = newQuantity
+    newItems[index].total = newItems[index].price * newQuantity
+    
+    const newSubtotal = newItems.reduce((sum, item) => sum + item.total, 0)
+    const newTax = newSubtotal * 0.1
+    const newTotal = newSubtotal + newTax - editFormData.discount
+    
+    setEditFormData({
+      ...editFormData,
+      items: newItems,
+      subtotal: newSubtotal,
+      tax: newTax,
+      total: newTotal
+    })
+  }
+
+  const updateItemPrice = (index: number, newPrice: number) => {
+    const newItems = [...editFormData.items]
+    newItems[index].price = newPrice
+    newItems[index].total = newPrice * newItems[index].quantity
+    
+    const newSubtotal = newItems.reduce((sum, item) => sum + item.total, 0)
+    const newTax = newSubtotal * 0.1
+    const newTotal = newSubtotal + newTax - editFormData.discount
+    
+    setEditFormData({
+      ...editFormData,
+      items: newItems,
+      subtotal: newSubtotal,
+      tax: newTax,
+      total: newTotal
+    })
+  }
+
+  const removeItem = (index: number) => {
+    const newItems = editFormData.items.filter((_, i) => i !== index)
+    const newSubtotal = newItems.reduce((sum, item) => sum + item.total, 0)
+    const newTax = newSubtotal * 0.1
+    const newTotal = newSubtotal + newTax - editFormData.discount
+    
+    setEditFormData({
+      ...editFormData,
+      items: newItems,
+      subtotal: newSubtotal,
+      tax: newTax,
+      total: newTotal
+    })
+  }
+
+  const updateDiscount = (newDiscount: number) => {
+    const newTotal = editFormData.subtotal + editFormData.tax - newDiscount
+    setEditFormData({
+      ...editFormData,
+      discount: newDiscount,
+      total: newTotal
+    })
+  }
+
   const handlePrintReceipt = (order: OrderDetails) => {
-    // In a real app, this would trigger receipt printing
-    console.log("Printing receipt for order:", order.receiptNumber)
+    // Create a printable receipt window
+    const receiptWindow = window.open('', '_blank', 'width=400,height=600')
+    if (!receiptWindow) {
+      alert('Please allow pop-ups to print receipts')
+      return
+    }
+    
+    const itemsHtml = order.items.map(item => 
+      `<div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+        <span>${item.name} × ${item.quantity}</span>
+        <span>$${Number(item.total).toFixed(2)}</span>
+      </div>`
+    ).join('')
+    
+    receiptWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Receipt #${order.receiptNumber}</title>
+        <style>
+          body { font-family: monospace; padding: 20px; max-width: 300px; margin: 0 auto; }
+          h1 { text-align: center; font-size: 18px; margin-bottom: 10px; }
+          .divider { border-top: 1px dashed #000; margin: 10px 0; }
+          .row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+          .bold { font-weight: bold; }
+          .center { text-align: center; }
+          .small { font-size: 12px; color: #666; }
+        </style>
+      </head>
+      <body>
+        <h1>POS Receipt</h1>
+        <p class="center small">Order #${order.receiptNumber}</p>
+        <p class="center small">${formatDate(order.timestamp)}</p>
+        <div class="divider"></div>
+        <p><strong>Customer:</strong> ${order.customerName}</p>
+        <p><strong>Payment:</strong> ${order.paymentMethod}</p>
+        <div class="divider"></div>
+        ${itemsHtml || '<p class="center small">No items</p>'}
+        <div class="divider"></div>
+        <div class="row"><span>Subtotal</span><span>$${Number(order.subtotal).toFixed(2)}</span></div>
+        <div class="row"><span>Tax</span><span>$${Number(order.tax).toFixed(2)}</span></div>
+        ${order.discount > 0 ? `<div class="row"><span>Discount</span><span>-$${Number(order.discount).toFixed(2)}</span></div>` : ''}
+        <div class="divider"></div>
+        <div class="row bold"><span>Total</span><span>$${Number(order.total).toFixed(2)}</span></div>
+        <div class="divider"></div>
+        <p class="center small">Thank you for your purchase!</p>
+        <script>window.print(); window.onafterprint = function() { window.close(); }</script>
+      </body>
+      </html>
+    `)
+    receiptWindow.document.close()
   }
 
   const formatDate = (date: Date) => {
@@ -235,8 +416,8 @@ const loadOrders = async () => {
         </CardContent>
       </Card>
 
-      {/* Orders Table */}
-      <Card>
+      {/* Orders Table - Desktop Only */}
+      <Card className="hidden md:block">
         <CardHeader>
           <CardTitle>Recent Orders</CardTitle>
         </CardHeader>
@@ -264,7 +445,14 @@ const loadOrders = async () => {
                     <div key={order.id} className="grid grid-cols-12 gap-4 p-4 hover:bg-muted/50">
                       <div className="col-span-2">
                         <p className="font-medium">#{order.receiptNumber}</p>
-                        <p className="text-xs text-muted-foreground">{order.paymentMethod}</p>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          {order.paymentMethod === 'card' ? (
+                            <CreditCard className="h-3 w-3" />
+                          ) : (
+                            <Banknote className="h-3 w-3" />
+                          )}
+                          <span className="capitalize">{order.paymentMethod}</span>
+                        </div>
                       </div>
                       <div className="col-span-2">
                         <p className="font-medium">{order.customerName}</p>
@@ -283,14 +471,15 @@ const loadOrders = async () => {
                         )}
                       </div>
                       <div className="col-span-2">
+                        {/* All orders can have status changed with color-coded dropdown */}
                         <Select value={status} onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}>
-                          <SelectTrigger className="w-full">
+                          <SelectTrigger className={`w-full border ${statusConfig.color}`}>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             {orderStatuses.map((s) => (
                               <SelectItem key={s.value} value={s.value}>
-                                {s.label}
+                                <span className={`px-2 py-0.5 rounded text-sm ${s.color}`}>{s.label}</span>
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -308,9 +497,17 @@ const loadOrders = async () => {
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditOrder(order)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit Order
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handlePrintReceipt(order)}>
                               <Printer className="h-4 w-4 mr-2" />
                               Print Receipt
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDeleteOrder(order.id)} className="text-destructive">
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Order
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -319,139 +516,123 @@ const loadOrders = async () => {
                   )
                 })}
               </div>
+
+              {filteredOrders.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">No orders found</div>
+              )}
             </div>
           </div>
-
-          {filteredOrders.length === 0 && (
-            <div className="p-12 text-center">
-              <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="font-medium mb-2">No orders found</h3>
-              <p className="text-muted-foreground">
-                {searchQuery || statusFilter !== "all"
-                  ? "Try adjusting your search or filters"
-                  : "Orders will appear here once customers start making purchases"}
-              </p>
-            </div>
-          )}
         </CardContent>
       </Card>
 
-      {/* Order Details Modal */}
-      <Dialog open={showOrderDetails} onOpenChange={setShowOrderDetails}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Order Details - #{selectedOrder?.receiptNumber}</DialogTitle>
-          </DialogHeader>
-          {selectedOrder && (
-            <div className="space-y-6">
-              {/* Order Info */}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <h3 className="font-medium mb-2">Customer Information</h3>
-                  <div className="space-y-1 text-sm">
-                    <p>
-                      <span className="font-medium">Name:</span> {selectedOrder.customerName}
-                    </p>
-                    {selectedOrder.customerEmail && (
-                      <p>
-                        <span className="font-medium">Email:</span> {selectedOrder.customerEmail}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-medium mb-2">Order Information</h3>
-                  <div className="space-y-1 text-sm">
-                    <p>
-                      <span className="font-medium">Date:</span> {formatDate(selectedOrder.timestamp)}
-                    </p>
-                    <p>
-                      <span className="font-medium">Payment:</span> {selectedOrder.paymentMethod}
-                    </p>
-                    <p>
-                      <span className="font-medium">Status:</span>{" "}
-                      <Select value={getOrderStatus(selectedOrder)} onValueChange={(newStatus) => {
-                        handleStatusChange(selectedOrder.id, newStatus)
-                        setShowOrderDetails(false)
-                      }}>
-                        <SelectTrigger className="w-32">
+      {/* Orders Cards - Mobile Only */}
+      <div className="md:hidden space-y-3">
+        {filteredOrders.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No orders found</p>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredOrders.map((order) => {
+            const status = getOrderStatus(order)
+            const statusConfig = getStatusBadge(status)
+            return (
+              <Card key={order.id}>
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-base">Order #{order.receiptNumber}</p>
+                        <p className="text-sm text-muted-foreground">{order.customerName}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-bold text-lg">${Number(order.total).toFixed(2)}</p>
+                        {order.discount > 0 && (
+                          <p className="text-xs text-green-600">-${Number(order.discount).toFixed(2)}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Date</p>
+                        <p className="font-medium">{formatDate(order.timestamp)}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Items</p>
+                        <p className="font-medium">{order.items.length}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-2 border-t">
+                      <div className="flex items-center gap-1 text-xs">
+                        {order.paymentMethod === 'card' ? (
+                          <CreditCard className="h-4 w-4" />
+                        ) : (
+                          <Banknote className="h-4 w-4" />
+                        )}
+                        <span className="capitalize">{order.paymentMethod}</span>
+                      </div>
+                      <Select value={status} onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}>
+                        <SelectTrigger className={`flex-1 h-8 text-xs ${statusConfig.color}`}>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
                           {orderStatuses.map((s) => (
                             <SelectItem key={s.value} value={s.value}>
-                              {s.label}
+                              <span className={`px-2 py-0.5 rounded text-sm ${s.color}`}>{s.label}</span>
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Order Items */}
-              <div>
-                <h3 className="font-medium mb-4">Order Items</h3>
-                <div className="space-y-3">
-                  {selectedOrder.items.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          ${Number(item.price).toFixed(2)} × {item.quantity}
-                        </p>
-                      </div>
-                      <p className="font-medium">${Number(item.total).toFixed(2)}</p>
                     </div>
-                  ))}
-                </div>
-              </div>
 
-              <Separator />
-
-              {/* Order Summary */}
-              <div>
-                <h3 className="font-medium mb-4">Order Summary</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>${Number(selectedOrder.subtotal).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tax</span>
-                    <span>${Number(selectedOrder.tax).toFixed(2)}</span>
-                  </div>
-                  {selectedOrder.discount > 0 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Discount</span>
-                      <span>-${Number(selectedOrder.discount).toFixed(2)}</span>
+                    <div className="flex gap-2 pt-2 border-t">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleViewOrder(order)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleEditOrder(order)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handlePrintReceipt(order)}>
+                            <Printer className="h-4 w-4 mr-2" />
+                            Print Receipt
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDeleteOrder(order.id)} className="text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Order
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                  )}
-                  <Separator />
-                  <div className="flex justify-between font-medium text-lg">
-                    <span>Total</span>
-                    <span>${Number(selectedOrder.total).toFixed(2)}</span>
                   </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2 pt-4">
-                <Button onClick={() => handlePrintReceipt(selectedOrder)}>
-                  <Printer className="h-4 w-4 mr-2" />
-                  Print Receipt
-                </Button>
-                <Button variant="outline" onClick={() => setShowOrderDetails(false)}>
-                  Close
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+                </CardContent>
+              </Card>
+            )
+          })
+        )}
+      </div>
     </div>
   )
 }
