@@ -1,130 +1,177 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Settings, ChevronDown, Menu, X } from "lucide-react"
+import { Search, Settings, ShoppingCart, Menu } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import ProductGrid from "../components/product-grid"
 import CartSidebar from "../components/cart-sidebar"
-import CategorySidebar from "../components/category-sidebar"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
+import { useCart } from "../context/cart-context"
+
+const CATEGORIES = [
+  { id: "all", name: "All Products", icon: "🏪" },
+  { id: "food", name: "Food", icon: "🍔" },
+  { id: "drinks", name: "Drinks", icon: "🥤" },
+  { id: "desserts", name: "Desserts", icon: "🍰" },
+]
 
 export default function POSPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [showCart, setShowCart] = useState(false)
-  const [showCategories, setShowCategories] = useState(false)
+  const { cartItems } = useCart()
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
 
   const router = useRouter()
 
   return (
     <div className="h-screen bg-background flex flex-col md:flex-row overflow-hidden">
-      {/* Mobile: Cart Drawer */}
+      {/* Mobile: Cart Sheet */}
       <Sheet open={showCart} onOpenChange={setShowCart}>
         <SheetContent side="right" className="p-0 w-full sm:w-96">
           <CartSidebar />
         </SheetContent>
       </Sheet>
 
-      {/* Mobile: Categories Drawer */}
-      <Sheet open={showCategories} onOpenChange={setShowCategories}>
-        <SheetContent side="left" className="p-0 w-64">
-          <div className="p-4">
-            <h2 className="text-lg font-semibold mb-4">Categories</h2>
-            <CategorySidebar 
-              selectedCategory={selectedCategory} 
-              onSelectCategory={(cat) => {
-                setSelectedCategory(cat)
-                setShowCategories(false)
-              }} 
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
-
       {/* Desktop: Category Sidebar */}
-      <div className="hidden md:flex flex-col w-56 border-r bg-background">
-        <CategorySidebar selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
-      </div>
+      <aside className="hidden md:flex md:w-56 lg:w-64 flex-col border-r bg-card/50">
+        <div className="p-6 border-b">
+          <h2 className="text-lg font-bold tracking-tight">Categories</h2>
+        </div>
+        <ScrollArea className="flex-1">
+          <div className="p-4 space-y-2">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
+                  selectedCategory === cat.id
+                    ? "bg-primary text-primary-foreground shadow-md"
+                    : "text-foreground hover:bg-muted"
+                }`}
+              >
+                <span className="text-xl">{cat.icon}</span>
+                <span className="truncate text-sm">{cat.name}</span>
+              </button>
+            ))}
+          </div>
+        </ScrollArea>
+      </aside>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Header */}
-        <div className="sticky top-0 z-10 bg-background border-b">
-          <div className="p-4">
-            {/* Mobile Header */}
-            <div className="md:hidden space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <h1 className="text-xl font-bold truncate">POS</h1>
-                <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={() => setShowCategories(true)}
-                  >
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={() => setShowCart(true)}
-                  >
-                    <ChevronDown className="h-5 w-5" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="icon"
-                    onClick={() => router.push("/admin")}
-                  >
-                    <Settings className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search products..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
+        {/* Compact Header */}
+        <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b">
+          <div className="px-4 py-3 md:px-6 md:py-4 space-y-3 md:space-y-0">
+            {/* Top Row: Menu + Search + Cart */}
+            <div className="flex items-center justify-between gap-3">
+              {/* Left: Menu Button + Search */}
+              <div className="flex items-center gap-2 flex-1 min-w-0">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="md:hidden flex-shrink-0">
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="p-0 w-72">
+                    <div className="p-6 border-b">
+                      <h2 className="text-lg font-bold">Categories</h2>
+                    </div>
+                    <div className="p-4 space-y-2">
+                      {CATEGORIES.map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => setSelectedCategory(cat.id)}
+                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
+                            selectedCategory === cat.id
+                              ? "bg-primary text-primary-foreground"
+                              : "text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <span className="text-xl">{cat.icon}</span>
+                          <span>{cat.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </SheetContent>
+                </Sheet>
 
-            {/* Desktop Header */}
-            <div className="hidden md:flex items-center justify-between gap-4">
-              <h1 className="text-2xl font-bold">Point of Sale</h1>
-              <div className="flex items-center gap-4">
-                <Button variant="outline" onClick={() => router.push("/admin")}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Admin
-                </Button>
-                <div className="relative w-64">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                   <Input
                     placeholder="Search products..."
-                    className="pl-8"
+                    className="pl-9 pr-3 bg-muted border-0"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
               </div>
+
+              {/* Right: Cart + Settings */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden relative"
+                  onClick={() => setShowCart(true)}
+                >
+                  <ShoppingCart className="h-5 w-5" />
+                  {cartCount > 0 && (
+                    <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                      {cartCount}
+                    </Badge>
+                  )}
+                </Button>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => router.push("/admin")}
+                >
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Mobile: Category Tabs */}
+            <div className="md:hidden">
+              <ScrollArea className="w-full">
+                <div className="flex gap-2 pb-1">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(cat.id)}
+                      className={`whitespace-nowrap px-3 py-2 rounded-full font-medium transition-all text-sm flex items-center gap-2 flex-shrink-0 ${
+                        selectedCategory === cat.id
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted hover:bg-muted/80 text-foreground"
+                      }`}
+                    >
+                      <span>{cat.icon}</span>
+                      <span>{cat.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Products Area */}
-        <div className="flex-1 overflow-auto p-4">
-          <ProductGrid category={selectedCategory} searchQuery={searchQuery} />
+        {/* Products Grid */}
+        <div className="flex-1 overflow-auto">
+          <div className="px-4 py-6 md:px-6 md:py-8">
+            <ProductGrid category={selectedCategory} searchQuery={searchQuery} />
+          </div>
         </div>
       </main>
 
       {/* Desktop: Cart Sidebar */}
-      <div className="hidden md:flex w-96 border-l bg-background flex-col max-h-screen">
+      <aside className="hidden md:flex w-80 lg:w-96 border-l bg-card/50 flex-col max-h-screen">
         <CartSidebar />
-      </div>
+      </aside>
     </div>
   )
 }
