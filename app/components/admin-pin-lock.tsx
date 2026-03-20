@@ -25,11 +25,15 @@ export default function AdminPinLock({ children }: AdminPinLockProps) {
         const response = await fetch('/api/settings')
         const settings = await response.json()
         
+        console.log('[v0] Loaded settings from API:', settings)
+        
         const adminPinEnabled = settings.adminPinEnabled || true // Default to true
         const adminPin = settings.adminPin || "1234"
         
+        console.log('[v0] Parsed PIN - enabled:', adminPinEnabled, 'PIN:', adminPin, 'type:', typeof adminPin)
+        
         setIsPinEnabled(adminPinEnabled)
-        setStoredPin(adminPin)
+        setStoredPin(String(adminPin)) // Ensure it's a string
         
         // Check if already authenticated in this session
         const sessionAuth = sessionStorage.getItem('admin-authenticated')
@@ -62,11 +66,15 @@ export default function AdminPinLock({ children }: AdminPinLockProps) {
   const handlePinSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
+    console.log('[v0] PIN submission - entered:', pin, 'stored:', storedPin, 'match:', pin === storedPin)
+    
     if (pin === storedPin) {
+      console.log('[v0] PIN correct!')
       setIsLocked(false)
       setError("")
       sessionStorage.setItem('admin-authenticated', 'true')
     } else {
+      console.log('[v0] PIN incorrect!')
       setError("Incorrect PIN. Please try again.")
       setPin("")
       inputRef.current?.focus()
