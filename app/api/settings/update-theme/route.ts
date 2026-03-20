@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
          VALUES ($1, $2, NOW(), NOW())
          ON CONFLICT (key) DO UPDATE 
          SET value = $2, updated_at = NOW()`,
-        ['darkMode', JSON.stringify({ enabled: darkMode })]
+        ['darkMode', darkMode]
       )
 
       return NextResponse.json(
