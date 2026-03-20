@@ -16,10 +16,23 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("cash")
   const [isHydrated, setIsHydrated] = useState(false)
   
-  // Only render after cart and customer hydrate from localStorage
+  console.log('[v0] Checkout page render - cart length:', cart.length, 'customer:', customer?.name)
+  
+  // Wait for cart to be populated before rendering checkout
   useEffect(() => {
-    // Delay to allow useCart to load from localStorage
-    const timer = setTimeout(() => setIsHydrated(true), 100)
+    // If cart is already populated, show immediately
+    if (cart.length > 0) {
+      console.log('[v0] Cart already populated, showing checkout')
+      setIsHydrated(true)
+      return
+    }
+    
+    // Otherwise wait up to 500ms for cart to load
+    const timer = setTimeout(() => {
+      console.log('[v0] Hydration timeout - cart length:', cart.length)
+      setIsHydrated(true)
+    }, 500)
+    
     return () => clearTimeout(timer)
   }, [])
 
@@ -28,6 +41,7 @@ export default function CheckoutPage() {
 
   const handlePayment = async () => {
     try {
+      console.log('[v0] Starting checkout with cart:', cart.length, 'items, customer:', customer?.name, 'discount:', discountAmount)
 
       const transaction = {
         customerId: customer?.id || null,
@@ -45,6 +59,8 @@ export default function CheckoutPage() {
         paymentMethod: paymentMethod,
       }
 
+      console.log('[v0] Sending transaction to API:', transaction)
+
       // Save transaction via API
       const response = await fetch('/api/checkout', {
         method: 'POST',
@@ -53,10 +69,12 @@ export default function CheckoutPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to process payment')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to process payment')
       }
 
       const result = await response.json()
+      console.log('[v0] Payment successful, order ID:', result.orderId)
       
       // Redirect to success page with order info
       const successParams = new URLSearchParams({
@@ -74,6 +92,7 @@ export default function CheckoutPage() {
         })))
       })
       
+      console.log('[v0] Clearing cart and redirecting to success')
       // Clear cart and redirect
       clearCart()
       // Note: customer is NOT cleared, they remain selected for the next order
@@ -88,12 +107,16 @@ export default function CheckoutPage() {
   if (!isHydrated) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <p className="mt-4 text-sm text-muted-foreground">Loading cart...</p>
+        </div>
       </div>
     )
   }
 
-  if (cart.length === 0) {
+  // Only show empty cart AFTER hydration is complete
+  if (!isHydrated || cart.length === 0) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center">

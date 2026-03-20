@@ -75,7 +75,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const savedCart = localStorage.getItem("cart")
     if (savedCart) {
       try {
-        setCart(JSON.parse(savedCart))
+        const parsedCart = JSON.parse(savedCart)
+        console.log('[v0] Loaded cart from localStorage:', parsedCart.length, 'items')
+        setCart(parsedCart)
       } catch (error) {
         console.error("Failed to parse cart from localStorage:", error)
       }
@@ -84,7 +86,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const savedCustomer = localStorage.getItem("selectedCustomer")
     if (savedCustomer) {
       try {
-        setCustomer(JSON.parse(savedCustomer))
+        const parsedCustomer = JSON.parse(savedCustomer)
+        console.log('[v0] Loaded customer from localStorage:', parsedCustomer.name)
+        setCustomer(parsedCustomer)
       } catch (error) {
         console.error("Failed to parse customer from localStorage:", error)
       }
