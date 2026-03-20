@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useCart } from "../context/cart-context"
+import { useToast } from "@/hooks/use-toast"
 
 interface Customer {
   id: number
@@ -27,6 +28,7 @@ interface CustomerModalProps {
 }
 
 export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
+  const { toast } = useToast()
   const [customers, setCustomers] = useState<Customer[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [showAddForm, setShowAddForm] = useState(false)
@@ -109,6 +111,10 @@ export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
 
   const handleSelectCustomer = (selectedCustomer: Customer) => {
     setCustomer(selectedCustomer)
+    toast({
+      title: "Customer Selected",
+      description: `${selectedCustomer.name} has been selected for this transaction.`,
+    })
     onClose()
   }
 

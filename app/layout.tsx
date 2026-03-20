@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { CartProvider } from "./context/cart-context"
 import { ThemeProvider } from "./components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -24,6 +25,7 @@ export default function RootLayout({
         <ThemeProvider>
           <CartProvider>{children}</CartProvider>
         </ThemeProvider>
+        <Toaster />
       </body>
     </html>
   )

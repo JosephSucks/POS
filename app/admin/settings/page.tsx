@@ -31,7 +31,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useTheme } from "@/app/components/theme-provider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
+import { useToast } from "@/hooks/use-toast"
 
 interface Settings {
   // Store Info
@@ -107,6 +107,7 @@ const defaultSettings: Settings = {
 }
 
 export default function SettingsPage() {
+  const { toast } = useToast()
   const [settings, setSettings] = useState<Settings>(defaultSettings)
   const [saving, setSaving] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
@@ -164,16 +165,28 @@ export default function SettingsPage() {
       if (!response.ok) throw new Error('Failed to save settings')
       
       setHasChanges(false)
+      toast({
+        title: "Settings Saved",
+        description: "Your settings have been updated successfully.",
+      })
       // Show success feedback
       setTimeout(() => setSaving(false), 500)
     } catch (error) {
       console.error('[v0] Failed to save settings:', error)
-      alert('Failed to save settings. Please try again.')
+      toast({
+        title: "Error",
+        description: "Failed to save settings. Please try again.",
+        variant: "destructive",
+      })
       setSaving(false)
     }
   }
 
   const handleReset = () => {
+    toast({
+      title: "Reset Settings?",
+      description: "This will restore all settings to their default values.",
+    })
     if (confirm('Are you sure you want to reset all settings to defaults?')) {
       setSettings(defaultSettings)
       setHasChanges(true)

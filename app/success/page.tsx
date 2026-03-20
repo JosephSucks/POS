@@ -18,6 +18,7 @@ interface OrderItem {
 function SuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [receiptSettings, setReceiptSettings] = useState<any>(null)
   
   const [orderData, setOrderData] = useState<{
     orderId: string
@@ -30,6 +31,21 @@ function SuccessContent() {
   } | null>(null)
 
   const date = new Date().toLocaleString()
+
+  useEffect(() => {
+    // Load receipt settings
+    const loadSettings = async () => {
+      try {
+        const response = await fetch('/api/settings')
+        const settings = await response.json()
+        setReceiptSettings(settings)
+      } catch (error) {
+        console.error('Failed to load receipt settings:', error)
+        setReceiptSettings(null)
+      }
+    }
+    loadSettings()
+  }, [])
 
   useEffect(() => {
     const orderId = searchParams.get('orderId')
@@ -76,14 +92,32 @@ function SuccessContent() {
   }
   
   const status = orderData.paymentMethod === 'cash' ? 'completed' : 'pending'
-  const statusConfig = status === 'completed' 
-    ? { label: 'Completed', color: 'bg-green-100 text-green-800' }
-    : { label: 'Pending', color: 'bg-yellow-100 text-yellow-800' }
 
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto max-w-md">
       <div className="rounded-lg border p-6 print:border-none bg-card">
+        {/* Receipt Header with Logo */}
+        <div className="mb-6 text-center print:mb-4">
+          {receiptSettings?.showLogo && (
+            <div className="mb-3 text-2xl font-bold">🏪</div>
+          )}
+          <h2 className="text-sm font-semibold">{receiptSettings?.storeName || 'POS System'}</h2>
+          {receiptSettings?.storeAddress && (
+            <p className="text-xs text-muted-foreground">{receiptSettings.storeAddress}</p>
+          )}
+          {receiptSettings?.storePhone && (
+            <p className="text-xs text-muted-foreground">{receiptSettings.storePhone}</p>
+          )}
+        </div>
+
+        {/* Custom Receipt Header Message */}
+        {receiptSettings?.receiptHeader && (
+          <div className="mb-4 border-t border-b py-2 text-center">
+            <p className="text-xs italic text-muted-foreground">{receiptSettings.receiptHeader}</p>
+          </div>
+        )}
+
         <div className="mb-6 flex items-center justify-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
             <Check className="h-6 w-6 text-green-600" />
@@ -108,14 +142,19 @@ function SuccessContent() {
             )}
             <span className="text-sm font-medium capitalize">{orderData.paymentMethod}</span>
           </div>
-          <Badge className={statusConfig.color}>{statusConfig.label}</Badge>
+          <Badge className={status === 'completed' 
+            ? 'bg-green-100 text-green-800'
+            : 'bg-yellow-100 text-yellow-800'
+          }>
+            {status === 'completed' ? 'Completed' : 'Pending'}
+          </Badge>
         </div>
 
         <Separator className="my-4" />
 
         <div className="space-y-3">
           {orderData.items.map((item, index) => (
-            <div key={index} className="flex justify-between">
+            <div key={index} className="flex justify-between text-sm">
               <div>
                 <p>
                   {item.name} × {item.quantity}
@@ -128,7 +167,7 @@ function SuccessContent() {
 
         <Separator className="my-4" />
 
-        <div className="space-y-2">
+        <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <p>Subtotal</p>
             <p>${orderData.subtotal.toFixed(2)}</p>
@@ -148,6 +187,13 @@ function SuccessContent() {
             <p>${orderData.total.toFixed(2)}</p>
           </div>
         </div>
+
+        {/* Custom Receipt Footer Message */}
+        {receiptSettings?.receiptFooter && (
+          <div className="mt-4 border-t pt-3 text-center">
+            <p className="text-xs italic text-muted-foreground">{receiptSettings.receiptFooter}</p>
+          </div>
+        )}
 
         <div className="mt-6 flex flex-col gap-3 print:hidden">
           <Button onClick={handlePrint} variant="outline" className="w-full">
