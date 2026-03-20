@@ -7,8 +7,6 @@ const nextConfig = {
     unoptimized: true,
   },
   reactStrictMode: true,
-  // Cache invalidation
-  swcMinify: true,
 }
 
 export default nextConfig
