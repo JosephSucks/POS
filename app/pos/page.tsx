@@ -23,8 +23,8 @@ export default function POSPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [showCart, setShowCart] = useState(false)
-  const { cartItems } = useCart()
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
+  const { cart, itemCount } = useCart()
+  const cartCount = itemCount
 
   const router = useRouter()
 
