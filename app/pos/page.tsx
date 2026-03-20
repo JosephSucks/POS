@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Settings, ShoppingCart } from "lucide-react"
+import { Search, Settings, ShoppingCart, ArrowLeft } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import ProductGrid from "../components/product-grid"
 import CartSidebar from "../components/cart-sidebar"
@@ -70,10 +70,22 @@ export default function POSPage() {
         {/* Compact Header */}
         <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b">
           <div className="px-4 py-3 md:px-6 md:py-4 space-y-3 md:space-y-0">
-            {/* Top Row: Menu + Search + Cart */}
-            <div className="flex items-center justify-between gap-3">
-              {/* Left: Search */}
-              <div className="flex items-center gap-2 flex-1 min-w-0">
+            {/* Top Row: Back + Search + Cart + Settings */}
+            <div className="flex items-center justify-between gap-2 md:gap-3">
+              {/* Left: Back + Search */}
+              <div className="flex items-center gap-1 md:gap-2 flex-1 min-w-0">
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 md:h-9 md:w-9 flex-shrink-0"
+                  onClick={() => {
+                    sessionStorage.removeItem('admin-authenticated')
+                    router.push("/")
+                  }}
+                  title="Back to admin"
+                >
+                  <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
+                </Button>
                 <div className="relative flex-1 min-w-0">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                   <Input
@@ -86,14 +98,14 @@ export default function POSPage() {
               </div>
 
               {/* Right: Cart + Settings */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
                 <Button 
                   variant="ghost"
                   size="icon"
-                  className="md:hidden relative"
+                  className="md:hidden h-8 w-8 relative"
                   onClick={() => setShowCart(true)}
                 >
-                  <ShoppingCart className="h-5 w-5" />
+                  <ShoppingCart className="h-4 w-4" />
                   {cartCount > 0 && (
                     <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
                       {cartCount}
@@ -103,9 +115,11 @@ export default function POSPage() {
                 <Button 
                   variant="ghost"
                   size="icon"
+                  className="h-8 w-8 md:h-9 md:w-9"
                   onClick={() => router.push("/admin")}
+                  title="Settings"
                 >
-                  <Settings className="h-5 w-5" />
+                  <Settings className="h-4 w-4 md:h-5 md:w-5" />
                 </Button>
               </div>
             </div>
