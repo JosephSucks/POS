@@ -49,11 +49,11 @@ export async function POST(request: Request) {
         VALUES (${orderId}, ${item.id}, ${item.quantity}, ${item.price}, ${item.total})
       `
 
-      // Update inventory
+      // Update product stock
       await sql`
-        UPDATE inventory 
-        SET quantity = quantity - ${item.quantity}
-        WHERE product_id = ${item.id}
+        UPDATE products 
+        SET stock = stock - ${item.quantity}, stock_updated_at = NOW()
+        WHERE id = ${item.id}
       `
     }
 
