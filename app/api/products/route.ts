@@ -26,7 +26,10 @@ export async function GET() {
         p.name, 
         CAST(p.price AS FLOAT) as price, 
         p.image_url as image, 
-        c.name as category
+        c.name as category,
+        p.stock,
+        p.reorder_level,
+        p.stock_updated_at
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       ORDER BY p.id
