@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Lock, ShieldCheck } from "lucide-react"
+import { Lock, ShieldCheck, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { useRouter } from "next/navigation"
 
 interface AdminPinLockProps {
   children: React.ReactNode
@@ -17,6 +18,7 @@ export default function AdminPinLock({ children }: AdminPinLockProps) {
   const [isPinEnabled, setIsPinEnabled] = useState(false)
   const [storedPin, setStoredPin] = useState("1234")
   const inputRef = useRef<HTMLInputElement>(null)
+  const router = useRouter()
 
   useEffect(() => {
     // Load PIN settings from database
@@ -102,6 +104,17 @@ export default function AdminPinLock({ children }: AdminPinLockProps) {
   if (isLocked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        {/* Responsive Back Button - Top Left */}
+        <Button 
+          variant="ghost"
+          size="icon"
+          className="absolute top-4 left-4 h-8 w-8 md:h-9 md:w-9 lg:h-10 lg:w-10"
+          onClick={() => router.push("/pos")}
+          title="Back to POS"
+        >
+          <ArrowLeft className="h-4 w-4 md:h-5 md:w-5 lg:h-6 lg:w-6" />
+        </Button>
+
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
