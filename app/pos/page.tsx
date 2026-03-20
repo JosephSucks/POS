@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Settings, ShoppingCart } from "lucide-react"
+import { Search, Settings, ShoppingCart, Moon, Sun } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import ProductGrid from "../components/product-grid"
 import CartSidebar from "../components/cart-sidebar"
@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { useCart } from "../context/cart-context"
+import { useTheme } from "../components/theme-provider"
 
 const CATEGORIES = [
   { id: "all", name: "All Products", icon: "🏪" },
@@ -25,6 +26,7 @@ export default function POSPage() {
   const [showCart, setShowCart] = useState(false)
   const { cart, itemCount } = useCart()
   const cartCount = itemCount
+  const { theme, toggleTheme } = useTheme()
 
   const router = useRouter()
 
@@ -83,7 +85,7 @@ export default function POSPage() {
                 />
               </div>
 
-              {/* Right: Cart + Settings */}
+              {/* Right: Cart + Theme + Settings */}
               <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
                 <Button 
                   variant="ghost"
@@ -97,6 +99,15 @@ export default function POSPage() {
                       {cartCount}
                     </Badge>
                   )}
+                </Button>
+                <Button 
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 md:h-9 md:w-9"
+                  onClick={toggleTheme}
+                  title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+                >
+                  {theme === 'light' ? <Moon className="h-4 w-4 md:h-5 md:w-5" /> : <Sun className="h-4 w-4 md:h-5 md:w-5" />}
                 </Button>
                 <Button 
                   variant="ghost"
