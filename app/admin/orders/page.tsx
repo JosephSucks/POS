@@ -428,30 +428,28 @@ const loadOrders = async () => {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <div className="min-w-full">
-              {/* Table Header */}
-              <div className="grid grid-cols-12 gap-4 p-4 border-b bg-muted/50 text-sm font-medium">
-                <div className="col-span-2">Order ID</div>
-                <div className="col-span-1">Table</div>
-                <div className="col-span-2">Customer</div>
-                <div className="col-span-2">Date</div>
-                <div className="col-span-1">Items</div>
-                <div className="col-span-2">Total</div>
-                <div className="col-span-1">Status</div>
-                <div className="col-span-1">Actions</div>
-              </div>
-
-              {/* Table Body */}
-              <div className="divide-y">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  <th className="p-4 text-left font-semibold">Order ID</th>
+                  <th className="p-4 text-left font-semibold">Table</th>
+                  <th className="p-4 text-left font-semibold">Customer</th>
+                  <th className="p-4 text-left font-semibold">Date</th>
+                  <th className="p-4 text-center font-semibold">Items</th>
+                  <th className="p-4 text-right font-semibold">Total</th>
+                  <th className="p-4 text-center font-semibold">Status</th>
+                  <th className="p-4 text-right font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
                 {filteredOrders.map((order) => {
                   const status = getOrderStatus(order)
                   const statusConfig = getStatusBadge(status)
-
                   return (
-                    <div key={order.id} className="grid grid-cols-12 gap-4 p-4 hover:bg-muted/50">
-                      <div className="col-span-2">
+                    <tr key={order.id} className="border-b hover:bg-muted/50 transition-colors">
+                      <td className="p-4">
                         <p className="font-medium">#{order.receiptNumber}</p>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                           {order.paymentMethod === 'card' ? (
                             <CreditCard className="h-3 w-3" />
                           ) : (
@@ -459,32 +457,31 @@ const loadOrders = async () => {
                           )}
                           <span className="capitalize">{order.paymentMethod}</span>
                         </div>
-                      </div>
-                      <div className="col-span-1">
+                      </td>
+                      <td className="p-4">
                         {order.tableNumber ? (
-                          <Badge variant="outline">Table {order.tableNumber}</Badge>
+                          <Badge variant="outline" className="whitespace-nowrap">Table {order.tableNumber}</Badge>
                         ) : (
                           <span className="text-xs text-muted-foreground">N/A</span>
                         )}
-                      </div>
-                      <div className="col-span-2">
+                      </td>
+                      <td className="p-4">
                         <p className="font-medium">{order.customerName}</p>
                         {order.customerEmail && <p className="text-xs text-muted-foreground">{order.customerEmail}</p>}
-                      </div>
-                      <div className="col-span-2">
+                      </td>
+                      <td className="p-4">
                         <p className="text-sm">{formatDate(order.timestamp)}</p>
-                      </div>
-                      <div className="col-span-1">
+                      </td>
+                      <td className="p-4 text-center">
                         <p className="text-sm">{order.items.length}</p>
-                      </div>
-                      <div className="col-span-2">
-                        <p className="font-medium">${Number(order.total).toFixed(2)}</p>
+                      </td>
+                      <td className="p-4 text-right">
+                        <p className="font-semibold">${Number(order.total).toFixed(2)}</p>
                         {order.discount > 0 && (
-                          <p className="text-xs text-green-600">-${Number(order.discount).toFixed(2)} discount</p>
+                          <p className="text-xs text-green-600">-${Number(order.discount).toFixed(2)}</p>
                         )}
-                      </div>
-                      <div className="col-span-1">
-                        {/* All orders can have status changed with color-coded dropdown */}
+                      </td>
+                      <td className="p-4">
                         <Select value={status} onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}>
                           <SelectTrigger className={`w-full border ${statusConfig.color}`}>
                             <SelectValue />
@@ -497,43 +494,42 @@ const loadOrders = async () => {
                             ))}
                           </SelectContent>
                         </Select>
-                      </div>
-                      <div className="col-span-1">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewOrder(order)}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditOrder(order)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit Order
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handlePrintReceipt(order)}>
-                              <Printer className="h-4 w-4 mr-2" />
-                              Print Receipt
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDeleteOrder(order.id)} className="text-destructive">
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete Order
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex justify-end gap-1">
+                          <Button size="sm" variant="ghost" onClick={() => handleViewOrder(order)} title="View Details">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => handleEditOrder(order)} title="Edit Order">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handlePrintReceipt(order)}>
+                                <Printer className="h-4 w-4 mr-2" />
+                                Print Receipt
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDeleteOrder(order.id)} className="text-destructive">
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Order
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </td>
+                    </tr>
                   )
                 })}
-              </div>
-
-              {filteredOrders.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">No orders found</div>
-              )}
-            </div>
+              </tbody>
+            </table>
+            {filteredOrders.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">No orders found</div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -649,6 +645,192 @@ const loadOrders = async () => {
           })
         )}
       </div>
+
+      {/* Order Details Modal */}
+      <Dialog open={showOrderDetails} onOpenChange={setShowOrderDetails}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Order Details #{selectedOrder?.receiptNumber}</DialogTitle>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Customer</p>
+                  <p className="font-semibold">{selectedOrder.customerName}</p>
+                  {selectedOrder.customerEmail && (
+                    <p className="text-sm text-muted-foreground">{selectedOrder.customerEmail}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Table</p>
+                  <p className="font-semibold">{selectedOrder.tableNumber ? `Table ${selectedOrder.tableNumber}` : 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Date</p>
+                  <p className="font-semibold">{formatDate(selectedOrder.timestamp)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Payment</p>
+                  <p className="font-semibold capitalize">{selectedOrder.paymentMethod}</p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h3 className="font-semibold mb-2">Items</h3>
+                <div className="space-y-2">
+                  {selectedOrder.items.map((item, idx) => (
+                    <div key={idx} className="flex justify-between items-center p-2 bg-muted rounded">
+                      <div>
+                        <p className="font-medium">{item.name}</p>
+                        <p className="text-sm text-muted-foreground">Qty: {item.quantity} × ${Number(item.price).toFixed(2)}</p>
+                      </div>
+                      <p className="font-semibold">${Number(item.total).toFixed(2)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-1">
+                <div className="flex justify-between">
+                  <p>Subtotal:</p>
+                  <p>${Number(selectedOrder.subtotal).toFixed(2)}</p>
+                </div>
+                <div className="flex justify-between">
+                  <p>Tax:</p>
+                  <p>${Number(selectedOrder.tax).toFixed(2)}</p>
+                </div>
+                {selectedOrder.discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <p>Discount:</p>
+                    <p>-${Number(selectedOrder.discount).toFixed(2)}</p>
+                  </div>
+                )}
+                <Separator />
+                <div className="flex justify-between font-bold text-lg">
+                  <p>Total:</p>
+                  <p>${Number(selectedOrder.total).toFixed(2)}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button onClick={() => handlePrintReceipt(selectedOrder)} className="flex-1">
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print Receipt
+                </Button>
+                <Button variant="outline" onClick={() => setShowOrderDetails(false)} className="flex-1">
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Order Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Order #{editingOrder?.receiptNumber}</DialogTitle>
+          </DialogHeader>
+          {editingOrder && (
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+              <div>
+                <Label>Customer</Label>
+                <p className="font-semibold text-sm">{editingOrder.customerName}</p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-3">Order Items</h3>
+                <div className="space-y-3">
+                  {editFormData.items.map((item, idx) => (
+                    <div key={idx} className="p-3 border rounded space-y-2">
+                      <div className="flex justify-between items-center">
+                        <p className="font-medium">{item.name}</p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(idx)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <Label className="text-xs">Quantity</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => updateItemQuantity(idx, Number(e.target.value))}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Price</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={item.price}
+                            onChange={(e) => updateItemPrice(idx, Number(e.target.value))}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Total</Label>
+                          <Input disabled value={`$${Number(item.total).toFixed(2)}`} />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <Label>Discount</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={editFormData.discount}
+                    onChange={(e) => updateDiscount(Number(e.target.value))}
+                    className="w-24"
+                  />
+                </div>
+
+                <div className="bg-muted p-3 rounded space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <p>Subtotal:</p>
+                    <p>${Number(editFormData.subtotal).toFixed(2)}</p>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <p>Tax:</p>
+                    <p>${Number(editFormData.tax).toFixed(2)}</p>
+                  </div>
+                  <div className="flex justify-between font-bold text-lg border-t pt-1 mt-1">
+                    <p>Total:</p>
+                    <p>${Number(editFormData.total).toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowEditModal(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveEdit}>
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
