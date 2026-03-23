@@ -166,39 +166,39 @@ export default function TablesPage() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6 md:space-y-8">
-        {/* Stats Cards - Square shape */}
-        <div className="grid grid-cols-3 gap-3 md:gap-4">
+        {/* Stats Cards - Smaller size */}
+        <div className="grid grid-cols-3 gap-3 md:gap-4 max-w-md md:max-w-lg">
           <Card
-            className={`rounded-xl p-4 md:p-6 border-2 border-emerald-500 overflow-hidden flex flex-col items-center justify-center aspect-square ${
+            className={`rounded-xl p-3 md:p-4 border-2 border-emerald-500 overflow-hidden flex flex-col items-center justify-center aspect-square ${
               isDark ? 'bg-slate-900' : 'bg-white'
             }`}
           >
-            <p className={`text-xs md:text-sm font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-xs font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Available
             </p>
-            <p className="text-4xl md:text-5xl font-bold text-emerald-500 text-center leading-tight mt-1">{availableCount}</p>
+            <p className="text-3xl md:text-4xl font-bold text-emerald-500 text-center leading-tight mt-1">{availableCount}</p>
           </Card>
 
           <Card
-            className={`rounded-xl p-4 md:p-6 border-2 border-amber-600 overflow-hidden flex flex-col items-center justify-center aspect-square ${
+            className={`rounded-xl p-3 md:p-4 border-2 border-amber-600 overflow-hidden flex flex-col items-center justify-center aspect-square ${
               isDark ? 'bg-slate-900' : 'bg-white'
             }`}
           >
-            <p className={`text-xs md:text-sm font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-xs font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Occupied
             </p>
-            <p className="text-4xl md:text-5xl font-bold text-amber-500 text-center leading-tight mt-1">{occupiedCount}</p>
+            <p className="text-3xl md:text-4xl font-bold text-amber-500 text-center leading-tight mt-1">{occupiedCount}</p>
           </Card>
 
           <Card
-            className={`rounded-xl p-4 md:p-6 border-2 border-blue-500 overflow-hidden flex flex-col items-center justify-center aspect-square ${
+            className={`rounded-xl p-3 md:p-4 border-2 border-blue-500 overflow-hidden flex flex-col items-center justify-center aspect-square ${
               isDark ? 'bg-slate-900' : 'bg-white'
             }`}
           >
-            <p className={`text-xs md:text-sm font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-xs font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Reserved
             </p>
-            <p className="text-4xl md:text-5xl font-bold text-blue-500 text-center leading-tight mt-1">{reservedCount}</p>
+            <p className="text-3xl md:text-4xl font-bold text-blue-500 text-center leading-tight mt-1">{reservedCount}</p>
           </Card>
         </div>
 
@@ -316,28 +316,42 @@ export default function TablesPage() {
                       </DialogContent>
                     </Dialog>
                   ) : (
-                    // Table Card Display
+                    // Table Card Display - Improved Design
                     <Card
-                      className={`rounded-lg md:rounded-xl p-4 md:p-5 border-2 h-full flex flex-col justify-between relative group transition-all overflow-hidden ${
+                      className={`rounded-lg md:rounded-xl p-3 md:p-4 border-2 h-full flex flex-col justify-between overflow-hidden ${
                         getTableCardBorder(table.status)
                       } ${
                         isDark
-                          ? 'bg-slate-900/50 hover:bg-slate-900/70'
-                          : 'bg-slate-50/50 hover:bg-slate-100/50'
+                          ? 'bg-slate-900/50'
+                          : 'bg-slate-50/50'
                       }`}
                     >
-                      <div className="space-y-2">
-                        {/* Table Number */}
-                        <div className="text-3xl md:text-4xl font-black text-foreground">{table.table_number}</div>
+                      <div className="space-y-2.5">
+                        {/* Header: Table Number and Edit Button */}
+                        <div className="flex items-start justify-between">
+                          <div className="text-2xl md:text-3xl font-black text-foreground">{table.table_number}</div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setEditingTableId(table.id)}
+                            className={`h-7 w-7 md:h-8 md:w-8 rounded-md flex-shrink-0 ${
+                              isDark
+                                ? 'text-slate-400'
+                                : 'text-slate-600'
+                            }`}
+                          >
+                            <Edit2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                          </Button>
+                        </div>
 
                         {/* Capacity */}
-                        <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground">
-                          <Users className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                        <div className="flex items-center gap-1 text-xs md:text-sm text-muted-foreground">
+                          <Users className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />
                           <span className="font-medium">{table.capacity} Seats</span>
                         </div>
 
-                        {/* Status Badge */}
-                        <Badge className={`${getStatusBadgeColor(table.status)} text-xs md:text-sm font-bold px-3 md:px-4 py-1.5 md:py-2 rounded-full w-fit`}>
+                        {/* Status Badge - No hover effects */}
+                        <Badge className={`${getStatusBadgeColor(table.status)} text-xs font-semibold px-2.5 md:px-3 py-1 rounded-full w-fit truncate`}>
                           {table.status === 'available'
                             ? 'Available'
                             : table.status === 'occupied'
@@ -358,25 +372,11 @@ export default function TablesPage() {
                         <Button
                           size="sm"
                           onClick={() => handleSelectTable(table.id)}
-                          className="w-full mt-3 text-xs md:text-sm h-9 rounded-lg"
+                          className="w-full mt-2.5 text-xs md:text-sm h-8 md:h-9 rounded-lg"
                         >
                           Select
                         </Button>
                       )}
-
-                      {/* Edit Button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setEditingTableId(table.id)}
-                        className={`absolute top-2 right-2 h-8 w-8 md:h-9 md:w-9 rounded-lg ${
-                          isDark
-                            ? 'hover:bg-slate-700/50 text-slate-400 hover:text-slate-200'
-                            : 'hover:bg-slate-200/50 text-slate-600 hover:text-slate-900'
-                        }`}
-                      >
-                        <Edit2 className="h-4 w-4 md:h-5 md:w-5" />
-                      </Button>
                     </Card>
                   )}
                 </div>
