@@ -65,37 +65,34 @@ export default function TablesPage() {
     }
   }
 
-  const getTableStyles = (status: string) => {
-    const isDark = theme === 'dark'
-    const baseStyles = 'min-h-48 flex flex-col justify-between rounded-xl border-2 p-4 md:p-6 transition-all duration-300'
-    
-    switch (status) {
-      case 'available':
-        return `${baseStyles} ${isDark ? 'border-emerald-500/50 bg-slate-900/40' : 'border-emerald-500/60 bg-emerald-50/30'}`
-      case 'occupied':
-        return `${baseStyles} ${isDark ? 'border-amber-600/50 bg-slate-900/40' : 'border-amber-600/60 bg-amber-50/30'}`
-      case 'reserved':
-        return `${baseStyles} ${isDark ? 'border-blue-500/50 bg-slate-900/40' : 'border-blue-500/60 bg-blue-50/30'}`
-      case 'maintenance':
-        return `${baseStyles} ${isDark ? 'border-red-600/50 bg-slate-900/40' : 'border-red-600/60 bg-red-50/30'}`
-      default:
-        return baseStyles
-    }
-  }
-
   const getStatusBadgeColor = (status: string) => {
     const isDark = theme === 'dark'
     switch (status) {
       case 'available':
-        return isDark ? 'bg-emerald-500/30 text-emerald-300' : 'bg-emerald-200 text-emerald-800'
+        return isDark ? 'bg-emerald-500/30 text-emerald-300 border-emerald-500/50' : 'bg-emerald-200 text-emerald-800 border-emerald-300'
       case 'occupied':
-        return isDark ? 'bg-amber-600/30 text-amber-300' : 'bg-amber-200 text-amber-800'
+        return isDark ? 'bg-amber-600/30 text-amber-300 border-amber-600/50' : 'bg-amber-200 text-amber-800 border-amber-300'
       case 'reserved':
-        return isDark ? 'bg-blue-500/30 text-blue-300' : 'bg-blue-200 text-blue-800'
+        return isDark ? 'bg-blue-500/30 text-blue-300 border-blue-500/50' : 'bg-blue-200 text-blue-800 border-blue-300'
       case 'maintenance':
-        return isDark ? 'bg-red-600/30 text-red-300' : 'bg-red-200 text-red-800'
+        return isDark ? 'bg-red-600/30 text-red-300 border-red-600/50' : 'bg-red-200 text-red-800 border-red-300'
       default:
         return isDark ? 'bg-gray-500/30 text-gray-300' : 'bg-gray-200 text-gray-800'
+    }
+  }
+
+  const getTableCardBorder = (status: string) => {
+    switch (status) {
+      case 'available':
+        return 'border-emerald-500/50'
+      case 'occupied':
+        return 'border-amber-600/50'
+      case 'reserved':
+        return 'border-blue-500/50'
+      case 'maintenance':
+        return 'border-red-600/50'
+      default:
+        return 'border-slate-300/50'
     }
   }
 
@@ -110,7 +107,7 @@ export default function TablesPage() {
   return (
     <div
       className={`min-h-screen transition-colors duration-300 ${
-        isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'
+        isDark ? 'bg-slate-950 text-white' : 'bg-white text-slate-900'
       }`}
     >
       {/* Header */}
@@ -118,33 +115,33 @@ export default function TablesPage() {
         className={`border-b sticky top-0 z-20 backdrop-blur-sm ${
           isDark
             ? 'border-slate-700/50 bg-slate-900/50'
-            : 'border-slate-200 bg-white/50'
+            : 'border-slate-200 bg-slate-50/50'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-blue-500">Tables</h1>
-            <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <h1 className="text-3xl md:text-4xl font-bold text-blue-500">Tables</h1>
+            <p className={`text-sm md:text-base mt-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Select a table to start taking orders
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {/* Dark/Light Mode Toggle */}
             <Button
               variant="outline"
               size="icon"
               onClick={() => toggleTheme()}
-              className={`rounded-lg h-10 w-10 ${
+              className={`rounded-lg h-9 w-9 md:h-10 md:w-10 ${
                 isDark
                   ? 'border-slate-600 hover:bg-slate-700/50'
                   : 'border-slate-300 hover:bg-slate-100'
               }`}
             >
               {theme === 'dark' ? (
-                <Sun className="h-5 w-5 text-yellow-400" />
+                <Sun className="h-4 w-4 md:h-5 md:w-5 text-yellow-400" />
               ) : (
-                <Moon className="h-5 w-5 text-slate-600" />
+                <Moon className="h-4 w-4 md:h-5 md:w-5 text-slate-600" />
               )}
             </Button>
 
@@ -154,13 +151,13 @@ export default function TablesPage() {
                 variant="outline"
                 size="icon"
                 onClick={() => router.push('/admin')}
-                className={`rounded-lg h-10 w-10 ${
+                className={`rounded-lg h-9 w-9 md:h-10 md:w-10 ${
                   isDark
                     ? 'border-slate-600 hover:bg-slate-700/50 text-slate-300'
                     : 'border-slate-300 hover:bg-slate-100 text-slate-600'
                 }`}
               >
-                <Settings className="h-5 w-5" />
+                <Settings className="h-4 w-4 md:h-5 md:w-5" />
               </Button>
             )}
           </div>
@@ -168,190 +165,193 @@ export default function TablesPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6 md:space-y-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-2 md:gap-4">
           <Card
-            className={`rounded-xl p-6 border-2 border-emerald-500/50 ${
+            className={`rounded-lg md:rounded-xl p-4 md:p-6 border-2 border-emerald-500/50 ${
               isDark ? 'bg-slate-900/40' : 'bg-emerald-50/30'
             }`}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <p className={`text-xs md:text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   Available
                 </p>
-                <p className="text-3xl font-bold text-emerald-500 mt-2">{availableCount}</p>
+                <p className="text-2xl md:text-3xl font-bold text-emerald-500 mt-1">{availableCount}</p>
               </div>
-              <Users className="h-8 w-8 text-emerald-500 opacity-50" />
+              <Users className="h-6 w-6 md:h-8 md:w-8 text-emerald-500 opacity-50 flex-shrink-0" />
             </div>
           </Card>
 
           <Card
-            className={`rounded-xl p-6 border-2 border-amber-600/50 ${
+            className={`rounded-lg md:rounded-xl p-4 md:p-6 border-2 border-amber-600/50 ${
               isDark ? 'bg-slate-900/40' : 'bg-amber-50/30'
             }`}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <p className={`text-xs md:text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   Occupied
                 </p>
-                <p className="text-3xl font-bold text-amber-500 mt-2">{occupiedCount}</p>
+                <p className="text-2xl md:text-3xl font-bold text-amber-500 mt-1">{occupiedCount}</p>
               </div>
-              <Users className="h-8 w-8 text-amber-600 opacity-50" />
+              <Users className="h-6 w-6 md:h-8 md:w-8 text-amber-500 opacity-50 flex-shrink-0" />
             </div>
           </Card>
 
           <Card
-            className={`rounded-xl p-6 border-2 border-blue-500/50 ${
+            className={`rounded-lg md:rounded-xl p-4 md:p-6 border-2 border-blue-500/50 ${
               isDark ? 'bg-slate-900/40' : 'bg-blue-50/30'
             }`}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                <p className={`text-xs md:text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   Reserved
                 </p>
-                <p className="text-3xl font-bold text-blue-500 mt-2">{reservedCount}</p>
+                <p className="text-2xl md:text-3xl font-bold text-blue-500 mt-1">{reservedCount}</p>
               </div>
-              <Clock className="h-8 w-8 text-blue-500 opacity-50" />
+              <Clock className="h-6 w-6 md:h-8 md:w-8 text-blue-500 opacity-50 flex-shrink-0" />
             </div>
           </Card>
         </div>
 
-        {/* Tables Grid */}
+        {/* Tables Section */}
         <div>
-          <h2 className={`text-xl font-semibold mb-6 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          <h2 className={`text-xl md:text-2xl font-semibold mb-4 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
             Your Tables
           </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {tables.map((table) => (
-              <div key={table.id}>
-                {editingTableId === table.id ? (
-                  <Dialog open={editingTableId === table.id} onOpenChange={(open) => !open && setEditingTableId(null)}>
-                    <DialogContent
-                      className={`w-[95vw] max-w-md rounded-xl ${
-                        isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'
-                      }`}
-                      description="Change table status with optional reservation time"
-                    >
-                      <DialogHeader>
-                        <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
-                          Table {table.table_number} Status
-                        </DialogTitle>
-                      </DialogHeader>
 
-                      <div className="space-y-6">
-                        {/* Status Selection */}
-                        <div className="space-y-3">
-                          <Label className={`text-base font-semibold block ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                            Select Status
-                          </Label>
-                          <div className="grid grid-cols-2 gap-3">
-                            {['available', 'occupied', 'reserved', 'maintenance'].map((status) => (
-                              <Button
-                                key={status}
-                                variant={status === editingTableId ? 'default' : 'outline'}
-                                onClick={() => {
-                                  if (status === 'reserved') {
-                                    // Show time selection
-                                  } else {
-                                    handleStatusChange(table.id, status)
-                                  }
-                                }}
-                                className={`h-12 text-sm font-medium ${
-                                  isDark
-                                    ? 'border-slate-600 hover:bg-slate-800'
-                                    : 'border-slate-300 hover:bg-slate-50'
-                                }`}
-                              >
-                                <div
-                                  className="h-2.5 w-2.5 rounded-full mr-2 flex-shrink-0"
-                                  style={{
-                                    backgroundColor:
-                                      status === 'available'
-                                        ? '#10b981'
-                                        : status === 'occupied'
-                                          ? '#f59e0b'
-                                          : status === 'reserved'
-                                            ? '#3b82f6'
-                                            : '#ef4444',
+          {/* Table Grid - Responsive */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+            {tables.map((table) => {
+              const isAvailable = table.status === 'available'
+
+              return (
+                <div key={table.id}>
+                  {editingTableId === table.id ? (
+                    // Edit Modal
+                    <Dialog open={editingTableId === table.id} onOpenChange={(open) => !open && setEditingTableId(null)}>
+                      <DialogContent
+                        className={`w-[95vw] max-w-md rounded-xl ${
+                          isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'
+                        }`}
+                        description="Change table status and set reservation times"
+                      >
+                        <DialogHeader>
+                          <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
+                            Table {table.table_number} Status
+                          </DialogTitle>
+                        </DialogHeader>
+
+                        <div className="space-y-4">
+                          {/* Status Selection */}
+                          <div className="space-y-2">
+                            <Label className="text-base font-semibold">Select Status</Label>
+                            <div className="grid grid-cols-2 gap-2">
+                              {['available', 'occupied', 'reserved', 'maintenance'].map((status) => (
+                                <Button
+                                  key={status}
+                                  variant={status === 'reserved' ? 'default' : 'outline'}
+                                  onClick={() => {
+                                    if (status !== 'reserved') {
+                                      handleStatusChange(table.id, status)
+                                    }
                                   }}
+                                  className={`h-11 text-sm font-medium rounded-lg ${
+                                    isDark && status !== 'reserved' ? 'bg-slate-800 hover:bg-slate-700 border-slate-600' : ''
+                                  }`}
+                                >
+                                  <div
+                                    className="h-2.5 w-2.5 rounded-full mr-2 flex-shrink-0"
+                                    style={{
+                                      backgroundColor:
+                                        status === 'available'
+                                          ? '#10b981'
+                                          : status === 'occupied'
+                                            ? '#f59e0b'
+                                            : status === 'reserved'
+                                              ? '#3b82f6'
+                                              : '#ef4444',
+                                    }}
+                                  />
+                                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Time Selection for Reserved */}
+                          <div className="border-t pt-4 space-y-3" style={{ borderColor: isDark ? '#475569' : '#e2e8f0' }}>
+                            <Label className="text-base font-semibold flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              Reservation Time
+                            </Label>
+                            <div className="space-y-2">
+                              <div>
+                                <Label className="text-sm">From</Label>
+                                <Input
+                                  type="datetime-local"
+                                  value={reservedFrom}
+                                  onChange={(e) => setReservedFrom(e.target.value)}
+                                  className={`mt-1 rounded-lg ${isDark ? 'bg-slate-800 border-slate-600' : ''}`}
                                 />
-                                {status.charAt(0).toUpperCase() + status.slice(1)}
-                              </Button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Time Selection */}
-                        <div className={`border-t pt-6 space-y-3 ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
-                          <Label className={`text-base font-semibold flex items-center gap-2 block ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
-                            <Clock className="h-4 w-4" />
-                            Reservation Time
-                          </Label>
-                          <div className="space-y-3">
-                            <div>
-                              <Label className="text-sm">From</Label>
-                              <Input
-                                type="datetime-local"
-                                value={reservedFrom}
-                                onChange={(e) => setReservedFrom(e.target.value)}
-                                className={`mt-1 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'}`}
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-sm">To</Label>
-                              <Input
-                                type="datetime-local"
-                                value={reservedTo}
-                                onChange={(e) => setReservedTo(e.target.value)}
-                                className={`mt-1 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'}`}
-                              />
+                              </div>
+                              <div>
+                                <Label className="text-sm">To</Label>
+                                <Input
+                                  type="datetime-local"
+                                  value={reservedTo}
+                                  onChange={(e) => setReservedTo(e.target.value)}
+                                  className={`mt-1 rounded-lg ${isDark ? 'bg-slate-800 border-slate-600' : ''}`}
+                                />
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Action Buttons */}
-                        <div className={`flex gap-3 pt-4 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setEditingTableId(null)
-                              setReservedFrom('')
-                              setReservedTo('')
-                            }}
-                            className={`flex-1 ${isDark ? 'border-slate-600 hover:bg-slate-800' : 'border-slate-300 hover:bg-slate-50'}`}
-                          >
-                            Cancel
-                          </Button>
-                          <Button
-                            onClick={() => handleStatusChange(table.id, 'reserved')}
-                            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
-                          >
-                            Reserve Table
-                          </Button>
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 pt-4 border-t" style={{ borderColor: isDark ? '#475569' : '#e2e8f0' }}>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                setEditingTableId(null)
+                                setReservedFrom('')
+                                setReservedTo('')
+                              }}
+                              className={`flex-1 rounded-lg ${isDark ? 'bg-slate-800 border-slate-600 hover:bg-slate-700' : ''}`}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={() => handleStatusChange(table.id, 'reserved')}
+                              className="flex-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              Reserve
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                ) : null}
+                      </DialogContent>
+                    </Dialog>
+                  ) : null}
 
-                {/* Table Card */}
-                <Card className={`${getTableStyles(table.status)} cursor-pointer group relative`}>
-                  <div className="space-y-3 flex-1">
+                  {/* Table Card */}
+                  <Card
+                    className={`rounded-lg md:rounded-xl border-2 p-4 md:p-5 h-full flex flex-col transition-all duration-300 relative group ${getTableCardBorder(table.status)} ${
+                      isDark ? 'bg-slate-900/40' : 'bg-slate-50'
+                    }`}
+                  >
                     {/* Table Number */}
-                    <div className="text-5xl md:text-6xl font-black">{table.table_number}</div>
+                    <div className="text-3xl md:text-4xl font-black mb-2">{table.table_number}</div>
 
                     {/* Capacity */}
-                    <div className={`flex items-center gap-2 text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                      <Users className="h-4 w-4" />
+                    <div className={`flex items-center gap-1.5 text-xs md:text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-3`}>
+                      <Users className="h-3.5 w-3.5 md:h-4 md:w-4" />
                       <span className="font-medium">{table.capacity} Seats</span>
                     </div>
 
                     {/* Status Badge */}
-                    <Badge className={`${getStatusBadgeColor(table.status)} w-fit text-xs font-bold px-3 py-1`}>
+                    <Badge className={`${getStatusBadgeColor(table.status)} text-xs md:text-sm font-semibold w-fit px-2.5 py-1 mb-2`}>
                       {table.status === 'available'
                         ? 'Available'
                         : table.status === 'occupied'
@@ -363,41 +363,47 @@ export default function TablesPage() {
 
                     {/* Reservation Time */}
                     {table.status === 'reserved' && table.reserved_from && table.reserved_to && (
-                      <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                      <p className={`text-xs md:text-sm ${isDark ? 'text-slate-500' : 'text-slate-500'} mb-3`}>
                         {formatReservationTime(table.reserved_from, table.reserved_to)}
                       </p>
                     )}
-                  </div>
 
-                  {/* Edit Button - Always Visible */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-3 right-3 h-8 w-8 opacity-100"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setEditingTableId(table.id)
-                    }}
-                    title="Change status"
-                  >
-                    <Edit2 className="h-4 w-4" />
-                  </Button>
+                    {/* Spacer to push button to bottom */}
+                    <div className="flex-1" />
 
-                  {/* Select Button */}
-                  {table.status === 'available' && (
+                    {/* Select Button - Only for Available */}
+                    {isAvailable && (
+                      <Button
+                        size="sm"
+                        className="w-full rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs md:text-sm font-semibold py-2 md:py-2.5"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleSelectTable(table.id)
+                        }}
+                      >
+                        Select
+                      </Button>
+                    )}
+
+                    {/* Edit Button */}
                     <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`absolute top-2 right-2 h-7 w-7 md:h-8 md:w-8 rounded-lg opacity-70 hover:opacity-100 transition-opacity ${
+                        isDark ? 'hover:bg-slate-700/50' : 'hover:bg-slate-200/50'
+                      }`}
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleSelectTable(table.id)
+                        setEditingTableId(table.id)
                       }}
-                      className="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
+                      title="Edit table status"
                     >
-                      Select
+                      <Edit2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
                     </Button>
-                  )}
-                </Card>
-              </div>
-            ))}
+                  </Card>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
