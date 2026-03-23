@@ -75,7 +75,7 @@ export default function TablesPage() {
       case 'reserved':
         return isDark ? 'bg-blue-500/30 text-blue-300 border-blue-500/50' : 'bg-blue-200 text-blue-800 border-blue-300'
       case 'maintenance':
-        return isDark ? 'bg-red-600/30 text-red-300 border-red-600/50' : 'bg-red-200 text-red-800 border-red-300'
+        return isDark ? 'bg-red-600/30 text-red-300 border-red-600/50' : 'bg-rose-200 text-rose-900 border-rose-300'
       default:
         return isDark ? 'bg-gray-500/30 text-gray-300' : 'bg-gray-200 text-gray-800'
     }
@@ -166,39 +166,39 @@ export default function TablesPage() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6 md:space-y-8">
-        {/* Stats Cards - Perfectly centered and uniform */}
+        {/* Stats Cards - Square shape */}
         <div className="grid grid-cols-3 gap-3 md:gap-4">
           <Card
-            className={`rounded-xl p-6 md:p-8 border-2 border-emerald-500 overflow-hidden flex flex-col items-center justify-center min-h-40 ${
+            className={`rounded-xl p-4 md:p-6 border-2 border-emerald-500 overflow-hidden flex flex-col items-center justify-center aspect-square ${
               isDark ? 'bg-slate-900' : 'bg-white'
             }`}
           >
-            <p className={`text-sm md:text-base font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-xs md:text-sm font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Available
             </p>
-            <p className="text-5xl md:text-6xl font-bold text-emerald-500 text-center leading-tight mt-2">{availableCount}</p>
+            <p className="text-4xl md:text-5xl font-bold text-emerald-500 text-center leading-tight mt-1">{availableCount}</p>
           </Card>
 
           <Card
-            className={`rounded-xl p-6 md:p-8 border-2 border-amber-600 overflow-hidden flex flex-col items-center justify-center min-h-40 ${
+            className={`rounded-xl p-4 md:p-6 border-2 border-amber-600 overflow-hidden flex flex-col items-center justify-center aspect-square ${
               isDark ? 'bg-slate-900' : 'bg-white'
             }`}
           >
-            <p className={`text-sm md:text-base font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-xs md:text-sm font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Occupied
             </p>
-            <p className="text-5xl md:text-6xl font-bold text-amber-500 text-center leading-tight mt-2">{occupiedCount}</p>
+            <p className="text-4xl md:text-5xl font-bold text-amber-500 text-center leading-tight mt-1">{occupiedCount}</p>
           </Card>
 
           <Card
-            className={`rounded-xl p-6 md:p-8 border-2 border-blue-500 overflow-hidden flex flex-col items-center justify-center min-h-40 ${
+            className={`rounded-xl p-4 md:p-6 border-2 border-blue-500 overflow-hidden flex flex-col items-center justify-center aspect-square ${
               isDark ? 'bg-slate-900' : 'bg-white'
             }`}
           >
-            <p className={`text-sm md:text-base font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-xs md:text-sm font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Reserved
             </p>
-            <p className="text-5xl md:text-6xl font-bold text-blue-500 text-center leading-tight mt-2">{reservedCount}</p>
+            <p className="text-4xl md:text-5xl font-bold text-blue-500 text-center leading-tight mt-1">{reservedCount}</p>
           </Card>
         </div>
 
