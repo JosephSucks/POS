@@ -5,15 +5,22 @@ import { useTable } from "@/app/context/table-context"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Users } from "lucide-react"
+import { Users, Edit2, X } from "lucide-react"
+import { useState } from "react"
 
 export default function TablesPage() {
   const router = useRouter()
-  const { tables, selectTable } = useTable()
+  const { tables, selectTable, updateTableStatus } = useTable()
+  const [editingTableId, setEditingTableId] = useState<number | null>(null)
 
   const handleSelectTable = (tableId: number) => {
     selectTable(tableId)
     router.push("/pos")
+  }
+
+  const handleStatusChange = async (tableId: number, newStatus: string) => {
+    await updateTableStatus(tableId, newStatus)
+    setEditingTableId(null)
   }
 
   const getStatusColor = (status: string) => {
@@ -43,28 +50,72 @@ export default function TablesPage() {
         {/* Tables Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {tables.map((table) => (
-            <Card
-              key={table.id}
-              className={`p-6 text-center cursor-pointer transition-all duration-200 ${
-                table.status === "available"
-                  ? "hover:shadow-lg hover:border-primary"
-                  : "opacity-50 cursor-not-allowed"
-              }`}
-              onClick={() => table.status === "available" && handleSelectTable(table.id)}
-            >
-              <div className="space-y-3">
-                <div className="text-4xl font-bold">
-                  {table.table_number}
-                </div>
-                <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
-                  <Users className="h-4 w-4" />
-                  <span>Capacity {table.capacity}</span>
-                </div>
-                <Badge className={getStatusColor(table.status)}>
-                  {table.status.charAt(0).toUpperCase() + table.status.slice(1)}
-                </Badge>
-              </div>
-            </Card>
+            <div key={table.id}>
+              {editingTableId === table.id ? (
+                // Edit Mode
+                <Card className="p-4 space-y-2 border-primary">
+                  <p className="text-sm font-semibold">Change Status</p>
+                  <div className="space-y-1">
+                    {["available", "occupied", "reserved", "maintenance"].map((status) => (
+                      <Button
+                        key={status}
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start text-xs"
+                        onClick={() => handleStatusChange(table.id, status)}
+                      >
+                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                      </Button>
+                    ))}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-xs"
+                    onClick={() => setEditingTableId(null)}
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Cancel
+                  </Button>
+                </Card>
+              ) : (
+                // Display Mode
+                <Card
+                  className={`p-6 text-center cursor-pointer transition-all duration-200 relative group ${
+                    table.status === "available"
+                      ? "hover:shadow-lg hover:border-primary"
+                      : "opacity-75"
+                  }`}
+                  onClick={() => table.status === "available" && handleSelectTable(table.id)}
+                >
+                  <div className="space-y-3">
+                    <div className="text-4xl font-bold">
+                      {table.table_number}
+                    </div>
+                    <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      <span>Capacity {table.capacity}</span>
+                    </div>
+                    <Badge className={getStatusColor(table.status)}>
+                      {table.status.charAt(0).toUpperCase() + table.status.slice(1)}
+                    </Badge>
+                  </div>
+                  
+                  {/* Edit Status Button - Always visible */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEditingTableId(table.id)
+                    }}
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                </Card>
+              )}
+            </div>
           ))}
         </div>
 
