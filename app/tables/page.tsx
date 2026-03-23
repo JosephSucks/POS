@@ -167,47 +167,53 @@ export default function TablesPage() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6 md:space-y-8">
         {/* Stats Cards - Fixed height to prevent protrusion */}
-        <div className="grid grid-cols-3 gap-3 md:gap-4 h-24 md:h-28">
+        <div className="grid grid-cols-3 gap-3 md:gap-4">
           <Card
-            className={`rounded-lg md:rounded-xl p-3 md:p-4 border-2 border-emerald-500/50 flex items-center justify-between overflow-hidden ${
+            className={`rounded-lg md:rounded-xl p-4 md:p-5 border-2 border-emerald-500/50 ${
               isDark ? 'bg-slate-900/40' : 'bg-emerald-50/30'
             }`}
           >
-            <div className="min-w-0">
-              <p className={`text-xs md:text-sm font-medium truncate ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                Available
-              </p>
-              <p className="text-xl md:text-2xl font-bold text-emerald-500 mt-0.5">{availableCount}</p>
+            <div className="flex items-center gap-3">
+              <div>
+                <p className={`text-xs md:text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  Available
+                </p>
+                <p className="text-2xl md:text-3xl font-bold text-emerald-500 mt-0.5">{availableCount}</p>
+              </div>
+              <Users className="h-8 w-8 md:h-10 md:w-10 text-emerald-500/30 flex-shrink-0 ml-auto" />
             </div>
-            <Users className="h-5 w-5 md:h-6 md:w-6 text-emerald-500 opacity-40 flex-shrink-0 ml-2" />
           </Card>
 
           <Card
-            className={`rounded-lg md:rounded-xl p-3 md:p-4 border-2 border-amber-600/50 flex items-center justify-between overflow-hidden ${
+            className={`rounded-lg md:rounded-xl p-4 md:p-5 border-2 border-amber-600/50 ${
               isDark ? 'bg-slate-900/40' : 'bg-amber-50/30'
             }`}
           >
-            <div className="min-w-0">
-              <p className={`text-xs md:text-sm font-medium truncate ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                Occupied
-              </p>
-              <p className="text-xl md:text-2xl font-bold text-amber-500 mt-0.5">{occupiedCount}</p>
+            <div className="flex items-center gap-3">
+              <div>
+                <p className={`text-xs md:text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  Occupied
+                </p>
+                <p className="text-2xl md:text-3xl font-bold text-amber-500 mt-0.5">{occupiedCount}</p>
+              </div>
+              <Users className="h-8 w-8 md:h-10 md:w-10 text-amber-500/30 flex-shrink-0 ml-auto" />
             </div>
-            <Users className="h-5 w-5 md:h-6 md:w-6 text-amber-500 opacity-40 flex-shrink-0 ml-2" />
           </Card>
 
           <Card
-            className={`rounded-lg md:rounded-xl p-3 md:p-4 border-2 border-blue-500/50 flex items-center justify-between overflow-hidden ${
+            className={`rounded-lg md:rounded-xl p-4 md:p-5 border-2 border-blue-500/50 ${
               isDark ? 'bg-slate-900/40' : 'bg-blue-50/30'
             }`}
           >
-            <div className="min-w-0">
-              <p className={`text-xs md:text-sm font-medium truncate ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                Reserved
-              </p>
-              <p className="text-xl md:text-2xl font-bold text-blue-500 mt-0.5">{reservedCount}</p>
+            <div className="flex items-center gap-3">
+              <div>
+                <p className={`text-xs md:text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  Reserved
+                </p>
+                <p className="text-2xl md:text-3xl font-bold text-blue-500 mt-0.5">{reservedCount}</p>
+              </div>
+              <Clock className="h-8 w-8 md:h-10 md:w-10 text-blue-500/30 flex-shrink-0 ml-auto" />
             </div>
-            <Clock className="h-5 w-5 md:h-6 md:w-6 text-blue-500 opacity-40 flex-shrink-0 ml-2" />
           </Card>
         </div>
 
