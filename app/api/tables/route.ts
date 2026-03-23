@@ -3,7 +3,7 @@ import { sql } from "@vercel/postgres"
 export async function GET(request: Request) {
   try {
     const tables = await sql`
-      SELECT id, table_number, capacity, status, current_order_id
+      SELECT id, table_number, capacity, status, current_order_id, reserved_from, reserved_to
       FROM tables
       ORDER BY table_number ASC
     `
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { table_id, status } = await request.json()
+    const { table_id, status, reserved_from, reserved_to } = await request.json()
 
     if (!table_id || !status) {
       return Response.json(
@@ -27,11 +27,26 @@ export async function PUT(request: Request) {
       )
     }
 
+    // If status is reserved, require time ranges
+    if (status === "reserved" && (!reserved_from || !reserved_to)) {
+      return Response.json(
+        { error: "Reservation times required for reserved status" },
+        { status: 400 }
+      )
+    }
+
+    // Clear reservation times if status is not reserved
+    const fromTime = status === "reserved" ? new Date(reserved_from) : null
+    const toTime = status === "reserved" ? new Date(reserved_to) : null
+
     const result = await sql`
       UPDATE tables
-      SET status = ${status}, updated_at = NOW()
+      SET status = ${status}, 
+          reserved_from = ${fromTime}, 
+          reserved_to = ${toTime},
+          updated_at = NOW()
       WHERE id = ${table_id}
-      RETURNING id, table_number, capacity, status, current_order_id
+      RETURNING id, table_number, capacity, status, current_order_id, reserved_from, reserved_to
     `
 
     if (result.rows.length === 0) {

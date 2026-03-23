@@ -8,6 +8,8 @@ export interface Table {
   capacity: number
   status: "available" | "occupied" | "reserved" | "maintenance"
   current_order_id: number | null
+  reserved_from?: string | null
+  reserved_to?: string | null
 }
 
 interface TableContextType {
@@ -17,7 +19,7 @@ interface TableContextType {
   selectTable: (tableId: number) => void
   deselectTable: () => void
   loadTables: () => Promise<void>
-  updateTableStatus: (tableId: number, status: string) => Promise<void>
+  updateTableStatus: (tableId: number, status: string, reservedFrom?: Date, reservedTo?: Date) => Promise<void>
 }
 
 const TableContext = createContext<TableContextType | undefined>(undefined)
@@ -53,12 +55,19 @@ export function TableProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const updateTableStatus = async (tableId: number, status: string) => {
+  const updateTableStatus = async (tableId: number, status: string, reservedFrom?: Date, reservedTo?: Date) => {
     try {
+      const payload: any = { table_id: tableId, status }
+      
+      if (status === "reserved" && reservedFrom && reservedTo) {
+        payload.reserved_from = reservedFrom.toISOString()
+        payload.reserved_to = reservedTo.toISOString()
+      }
+      
       const response = await fetch("/api/tables", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ table_id: tableId, status }),
+        body: JSON.stringify(payload),
       })
       
       if (!response.ok) throw new Error("Failed to update table status")
