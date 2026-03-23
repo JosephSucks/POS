@@ -318,7 +318,7 @@ export default function TablesPage() {
                   ) : (
                     // Table Card Display
                     <Card
-                      className={`rounded-lg md:rounded-xl p-4 md:p-5 border-2 h-full flex flex-col justify-between relative group transition-all ${
+                      className={`rounded-lg md:rounded-xl p-4 md:p-5 border-2 h-full flex flex-col justify-between relative group transition-all overflow-hidden ${
                         getTableCardBorder(table.status)
                       } ${
                         isDark
@@ -337,7 +337,7 @@ export default function TablesPage() {
                         </div>
 
                         {/* Status Badge */}
-                        <Badge className={`${getStatusBadgeColor(table.status)} text-xs md:text-sm font-bold px-4 py-2 rounded-full`}>
+                        <Badge className={`${getStatusBadgeColor(table.status)} text-xs md:text-sm font-bold px-3 md:px-4 py-1.5 md:py-2 rounded-full w-fit`}>
                           {table.status === 'available'
                             ? 'Available'
                             : table.status === 'occupied'
