@@ -166,54 +166,48 @@ export default function TablesPage() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6 md:space-y-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-2 md:gap-4">
+        {/* Stats Cards - Fixed height to prevent protrusion */}
+        <div className="grid grid-cols-3 gap-3 md:gap-4 h-24 md:h-28">
           <Card
-            className={`rounded-lg md:rounded-xl p-4 md:p-6 border-2 border-emerald-500/50 ${
+            className={`rounded-lg md:rounded-xl p-3 md:p-4 border-2 border-emerald-500/50 flex items-center justify-between overflow-hidden ${
               isDark ? 'bg-slate-900/40' : 'bg-emerald-50/30'
             }`}
           >
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className={`text-xs md:text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Available
-                </p>
-                <p className="text-2xl md:text-3xl font-bold text-emerald-500 mt-1">{availableCount}</p>
-              </div>
-              <Users className="h-6 w-6 md:h-8 md:w-8 text-emerald-500 opacity-50 flex-shrink-0" />
+            <div className="min-w-0">
+              <p className={`text-xs md:text-sm font-medium truncate ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                Available
+              </p>
+              <p className="text-xl md:text-2xl font-bold text-emerald-500 mt-0.5">{availableCount}</p>
             </div>
+            <Users className="h-5 w-5 md:h-6 md:w-6 text-emerald-500 opacity-40 flex-shrink-0 ml-2" />
           </Card>
 
           <Card
-            className={`rounded-lg md:rounded-xl p-4 md:p-6 border-2 border-amber-600/50 ${
+            className={`rounded-lg md:rounded-xl p-3 md:p-4 border-2 border-amber-600/50 flex items-center justify-between overflow-hidden ${
               isDark ? 'bg-slate-900/40' : 'bg-amber-50/30'
             }`}
           >
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className={`text-xs md:text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Occupied
-                </p>
-                <p className="text-2xl md:text-3xl font-bold text-amber-500 mt-1">{occupiedCount}</p>
-              </div>
-              <Users className="h-6 w-6 md:h-8 md:w-8 text-amber-500 opacity-50 flex-shrink-0" />
+            <div className="min-w-0">
+              <p className={`text-xs md:text-sm font-medium truncate ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                Occupied
+              </p>
+              <p className="text-xl md:text-2xl font-bold text-amber-500 mt-0.5">{occupiedCount}</p>
             </div>
+            <Users className="h-5 w-5 md:h-6 md:w-6 text-amber-500 opacity-40 flex-shrink-0 ml-2" />
           </Card>
 
           <Card
-            className={`rounded-lg md:rounded-xl p-4 md:p-6 border-2 border-blue-500/50 ${
+            className={`rounded-lg md:rounded-xl p-3 md:p-4 border-2 border-blue-500/50 flex items-center justify-between overflow-hidden ${
               isDark ? 'bg-slate-900/40' : 'bg-blue-50/30'
             }`}
           >
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className={`text-xs md:text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-                  Reserved
-                </p>
-                <p className="text-2xl md:text-3xl font-bold text-blue-500 mt-1">{reservedCount}</p>
-              </div>
-              <Clock className="h-6 w-6 md:h-8 md:w-8 text-blue-500 opacity-50 flex-shrink-0" />
+            <div className="min-w-0">
+              <p className={`text-xs md:text-sm font-medium truncate ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                Reserved
+              </p>
+              <p className="text-xl md:text-2xl font-bold text-blue-500 mt-0.5">{reservedCount}</p>
             </div>
+            <Clock className="h-5 w-5 md:h-6 md:w-6 text-blue-500 opacity-40 flex-shrink-0 ml-2" />
           </Card>
         </div>
 
@@ -319,88 +313,81 @@ export default function TablesPage() {
                                 setReservedFrom('')
                                 setReservedTo('')
                               }}
-                              className={`flex-1 rounded-lg ${isDark ? 'bg-slate-800 border-slate-600 hover:bg-slate-700' : ''}`}
+                              className="flex-1"
                             >
                               Cancel
                             </Button>
-                            <Button
-                              onClick={() => handleStatusChange(table.id, 'reserved')}
-                              className="flex-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
-                            >
-                              Reserve
+                            <Button onClick={() => handleStatusChange(table.id, 'reserved')} className="flex-1">
+                              Reserve Table
                             </Button>
                           </div>
                         </div>
                       </DialogContent>
                     </Dialog>
-                  ) : null}
-
-                  {/* Table Card */}
-                  <Card
-                    className={`rounded-lg md:rounded-xl border-2 p-4 md:p-5 h-full flex flex-col transition-all duration-300 relative group ${getTableCardBorder(table.status)} ${
-                      isDark ? 'bg-slate-900/40' : 'bg-slate-50'
-                    }`}
-                  >
-                    {/* Table Number */}
-                    <div className="text-3xl md:text-4xl font-black mb-2">{table.table_number}</div>
-
-                    {/* Capacity */}
-                    <div className={`flex items-center gap-1.5 text-xs md:text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'} mb-3`}>
-                      <Users className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                      <span className="font-medium">{table.capacity} Seats</span>
-                    </div>
-
-                    {/* Status Badge */}
-                    <Badge className={`${getStatusBadgeColor(table.status)} text-xs md:text-sm font-semibold w-fit px-2.5 py-1 mb-2`}>
-                      {table.status === 'available'
-                        ? 'Available'
-                        : table.status === 'occupied'
-                          ? 'Occupied'
-                          : table.status === 'reserved'
-                            ? 'Reserved'
-                            : 'Maintenance'}
-                    </Badge>
-
-                    {/* Reservation Time */}
-                    {table.status === 'reserved' && table.reserved_from && table.reserved_to && (
-                      <p className={`text-xs md:text-sm ${isDark ? 'text-slate-500' : 'text-slate-500'} mb-3`}>
-                        {formatReservationTime(table.reserved_from, table.reserved_to)}
-                      </p>
-                    )}
-
-                    {/* Spacer to push button to bottom */}
-                    <div className="flex-1" />
-
-                    {/* Select Button - Only for Available */}
-                    {isAvailable && (
-                      <Button
-                        size="sm"
-                        className="w-full rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs md:text-sm font-semibold py-2 md:py-2.5"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleSelectTable(table.id)
-                        }}
-                      >
-                        Select
-                      </Button>
-                    )}
-
-                    {/* Edit Button */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={`absolute top-2 right-2 h-7 w-7 md:h-8 md:w-8 rounded-lg opacity-70 hover:opacity-100 transition-opacity ${
-                        isDark ? 'hover:bg-slate-700/50' : 'hover:bg-slate-200/50'
+                  ) : (
+                    // Table Card Display
+                    <Card
+                      className={`rounded-lg md:rounded-xl p-4 md:p-5 border-2 h-full flex flex-col justify-between relative group transition-all ${
+                        getTableCardBorder(table.status)
+                      } ${
+                        isDark
+                          ? 'bg-slate-900/50 hover:bg-slate-900/70'
+                          : 'bg-slate-50/50 hover:bg-slate-100/50'
                       }`}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setEditingTableId(table.id)
-                      }}
-                      title="Edit table status"
                     >
-                      <Edit2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                    </Button>
-                  </Card>
+                      <div className="space-y-2">
+                        {/* Table Number */}
+                        <div className="text-3xl md:text-4xl font-black text-foreground">{table.table_number}</div>
+
+                        {/* Capacity */}
+                        <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground">
+                          <Users className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                          <span className="font-medium">{table.capacity} Seats</span>
+                        </div>
+
+                        {/* Status Badge */}
+                        <Badge className={`${getStatusBadgeColor(table.status)} text-xs md:text-sm font-bold w-fit py-1.5 px-3`}>
+                          {table.status === 'available'
+                            ? 'Available'
+                            : table.status === 'occupied'
+                              ? 'Occupied'
+                              : table.status === 'reserved'
+                                ? 'Reserved'
+                                : 'Maintenance'}
+                        </Badge>
+
+                        {/* Reservation Time */}
+                        {table.status === 'reserved' && table.reserved_from && table.reserved_to && (
+                          <p className="text-xs text-muted-foreground/70 font-medium">{formatReservationTime(table.reserved_from, table.reserved_to)}</p>
+                        )}
+                      </div>
+
+                      {/* Select Button for Available Tables */}
+                      {isAvailable && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleSelectTable(table.id)}
+                          className="w-full mt-3 text-xs md:text-sm h-9 rounded-lg"
+                        >
+                          Select
+                        </Button>
+                      )}
+
+                      {/* Edit Button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setEditingTableId(table.id)}
+                        className={`absolute top-2 right-2 h-8 w-8 md:h-9 md:w-9 rounded-lg ${
+                          isDark
+                            ? 'hover:bg-slate-700/50 text-slate-400 hover:text-slate-200'
+                            : 'hover:bg-slate-200/50 text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <Edit2 className="h-4 w-4 md:h-5 md:w-5" />
+                      </Button>
+                    </Card>
+                  )}
                 </div>
               )
             })}
