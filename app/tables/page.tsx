@@ -166,39 +166,39 @@ export default function TablesPage() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6 md:space-y-8">
-        {/* Stats Cards - Consistent styling */}
+        {/* Stats Cards - Perfectly centered and uniform */}
         <div className="grid grid-cols-3 gap-3 md:gap-4">
           <Card
-            className={`rounded-lg md:rounded-xl p-5 md:p-6 border-2 border-emerald-500 overflow-hidden ${
+            className={`rounded-xl p-6 md:p-8 border-2 border-emerald-500 overflow-hidden flex flex-col items-center justify-center min-h-40 ${
               isDark ? 'bg-slate-900' : 'bg-white'
             }`}
           >
-            <p className={`text-xs md:text-sm font-medium mb-3 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-sm md:text-base font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Available
             </p>
-            <p className="text-4xl md:text-5xl font-bold text-emerald-500 leading-none">{availableCount}</p>
+            <p className="text-5xl md:text-6xl font-bold text-emerald-500 text-center leading-tight mt-2">{availableCount}</p>
           </Card>
 
           <Card
-            className={`rounded-lg md:rounded-xl p-5 md:p-6 border-2 border-amber-600 overflow-hidden ${
+            className={`rounded-xl p-6 md:p-8 border-2 border-amber-600 overflow-hidden flex flex-col items-center justify-center min-h-40 ${
               isDark ? 'bg-slate-900' : 'bg-white'
             }`}
           >
-            <p className={`text-xs md:text-sm font-medium mb-3 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-sm md:text-base font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Occupied
             </p>
-            <p className="text-4xl md:text-5xl font-bold text-amber-500 leading-none">{occupiedCount}</p>
+            <p className="text-5xl md:text-6xl font-bold text-amber-500 text-center leading-tight mt-2">{occupiedCount}</p>
           </Card>
 
           <Card
-            className={`rounded-lg md:rounded-xl p-5 md:p-6 border-2 border-blue-500 overflow-hidden ${
+            className={`rounded-xl p-6 md:p-8 border-2 border-blue-500 overflow-hidden flex flex-col items-center justify-center min-h-40 ${
               isDark ? 'bg-slate-900' : 'bg-white'
             }`}
           >
-            <p className={`text-xs md:text-sm font-medium mb-3 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-sm md:text-base font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Reserved
             </p>
-            <p className="text-4xl md:text-5xl font-bold text-blue-500 leading-none">{reservedCount}</p>
+            <p className="text-5xl md:text-6xl font-bold text-blue-500 text-center leading-tight mt-2">{reservedCount}</p>
           </Card>
         </div>
 
