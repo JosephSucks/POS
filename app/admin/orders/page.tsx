@@ -17,6 +17,8 @@ interface OrderDetails extends Transaction {
   customerName?: string
   customerEmail?: string
   status?: string
+  tableId?: number
+  tableNumber?: number
 }
 
 const orderStatuses = [
@@ -75,6 +77,8 @@ const loadOrders = async () => {
       customerEmail: order.customer_email || '',
       paymentMethod: order.payment_method || 'cash',
       status: order.status || 'pending',
+      tableId: order.table_id,
+      tableNumber: order.table_number,
     }))
 
     setOrders(ordersWithCustomerInfo.reverse())
@@ -293,6 +297,7 @@ const loadOrders = async () => {
       <body>
         <h1>POS Receipt</h1>
         <p class="center small">Order #${order.receiptNumber}</p>
+        ${order.tableNumber ? `<p class="center small">Table ${order.tableNumber}</p>` : ''}
         <p class="center small">${formatDate(order.timestamp)}</p>
         <div class="divider"></div>
         <p><strong>Customer:</strong> ${order.customerName}</p>
@@ -427,11 +432,12 @@ const loadOrders = async () => {
               {/* Table Header */}
               <div className="grid grid-cols-12 gap-4 p-4 border-b bg-muted/50 text-sm font-medium">
                 <div className="col-span-2">Order ID</div>
+                <div className="col-span-1">Table</div>
                 <div className="col-span-2">Customer</div>
                 <div className="col-span-2">Date</div>
                 <div className="col-span-1">Items</div>
                 <div className="col-span-2">Total</div>
-                <div className="col-span-2">Status</div>
+                <div className="col-span-1">Status</div>
                 <div className="col-span-1">Actions</div>
               </div>
 
@@ -454,6 +460,13 @@ const loadOrders = async () => {
                           <span className="capitalize">{order.paymentMethod}</span>
                         </div>
                       </div>
+                      <div className="col-span-1">
+                        {order.tableNumber ? (
+                          <Badge variant="outline">Table {order.tableNumber}</Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">N/A</span>
+                        )}
+                      </div>
                       <div className="col-span-2">
                         <p className="font-medium">{order.customerName}</p>
                         {order.customerEmail && <p className="text-xs text-muted-foreground">{order.customerEmail}</p>}
@@ -470,7 +483,7 @@ const loadOrders = async () => {
                           <p className="text-xs text-green-600">-${Number(order.discount).toFixed(2)} discount</p>
                         )}
                       </div>
-                      <div className="col-span-2">
+                      <div className="col-span-1">
                         {/* All orders can have status changed with color-coded dropdown */}
                         <Select value={status} onValueChange={(newStatus) => handleStatusChange(order.id, newStatus)}>
                           <SelectTrigger className={`w-full border ${statusConfig.color}`}>
@@ -541,30 +554,33 @@ const loadOrders = async () => {
             return (
               <Card key={order.id}>
                 <CardContent className="p-4">
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <p className="font-semibold text-base">Order #{order.receiptNumber}</p>
-                        <p className="text-sm text-muted-foreground">{order.customerName}</p>
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="font-semibold text-base">Order #{order.receiptNumber}</p>
+                          <p className="text-sm text-muted-foreground">{order.customerName}</p>
+                          {order.tableNumber && (
+                            <Badge variant="outline" className="mt-1">Table {order.tableNumber}</Badge>
+                          )}
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="font-bold text-lg">${Number(order.total).toFixed(2)}</p>
+                          {order.discount > 0 && (
+                            <p className="text-xs text-green-600">-${Number(order.discount).toFixed(2)}</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="font-bold text-lg">${Number(order.total).toFixed(2)}</p>
-                        {order.discount > 0 && (
-                          <p className="text-xs text-green-600">-${Number(order.discount).toFixed(2)}</p>
-                        )}
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Date</p>
-                        <p className="font-medium">{formatDate(order.timestamp)}</p>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Date</p>
+                          <p className="font-medium">{formatDate(order.timestamp)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Items</p>
+                          <p className="font-medium">{order.items.length}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Items</p>
-                        <p className="font-medium">{order.items.length}</p>
-                      </div>
-                    </div>
 
                     <div className="flex items-center gap-2 pt-2 border-t">
                       <div className="flex items-center gap-1 text-xs">

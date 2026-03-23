@@ -19,11 +19,12 @@ export async function GET() {
   try {
     console.log('[v0] Fetching orders from database...')
     
-    // Fetch orders with customer info
+    // Fetch orders with customer info and table number
     const orders = await sql`
       SELECT 
         o.id,
         o.customer_id,
+        o.table_id,
         o.total,
         o.subtotal,
         o.tax,
@@ -33,9 +34,11 @@ export async function GET() {
         o.created_at,
         o.updated_at,
         c.name as customer_name,
-        c.email as customer_email
+        c.email as customer_email,
+        t.table_number
       FROM orders o
       LEFT JOIN customers c ON o.customer_id = c.id
+      LEFT JOIN tables t ON o.table_id = t.id
       ORDER BY o.created_at DESC
       LIMIT 100
     `
