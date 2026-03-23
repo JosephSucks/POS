@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { useTheme } from "@/components/theme-provider"
+import { useTheme } from "@/app/components/theme-provider"
 
 interface AnalyticsData {
   revenue: {

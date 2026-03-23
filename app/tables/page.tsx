@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Users, Edit2, Moon, Sun, Settings } from 'lucide-react'
-import { useTheme } from '@/components/theme-provider'
+import { useTheme } from '@/app/components/theme-provider'
 
 interface Table {
   id: string

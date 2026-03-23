@@ -24,7 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import { useTheme } from "@/components/theme-provider"
+import { useTheme } from "@/app/components/theme-provider"
 
 interface Customer {
   id: number

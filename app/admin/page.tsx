@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
-import { useTheme } from "@/components/theme-provider"
+import { useTheme } from "@/app/components/theme-provider"
 
 interface InventoryItem {
   id: number
