@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Users, Clock, Settings, Moon, Sun, Edit2 } from 'lucide-react'
+import { Users, Clock, Settings, Moon, Sun, Edit2, X } from 'lucide-react'
 import { useState } from 'react'
 
 export default function TablesPage() {
@@ -65,33 +65,37 @@ export default function TablesPage() {
     }
   }
 
-  const getTableBorderColor = (status: string) => {
+  const getTableStyles = (status: string) => {
+    const isDark = theme === 'dark'
+    const baseStyles = 'min-h-48 flex flex-col justify-between rounded-xl border-2 p-4 md:p-6 transition-all duration-300'
+    
     switch (status) {
       case 'available':
-        return 'border-emerald-500/50 dark:border-emerald-500/40'
+        return `${baseStyles} ${isDark ? 'border-emerald-500/50 bg-slate-900/40' : 'border-emerald-500/60 bg-emerald-50/30'}`
       case 'occupied':
-        return 'border-amber-600/50 dark:border-amber-600/40'
+        return `${baseStyles} ${isDark ? 'border-amber-600/50 bg-slate-900/40' : 'border-amber-600/60 bg-amber-50/30'}`
       case 'reserved':
-        return 'border-blue-500/50 dark:border-blue-500/40'
+        return `${baseStyles} ${isDark ? 'border-blue-500/50 bg-slate-900/40' : 'border-blue-500/60 bg-blue-50/30'}`
       case 'maintenance':
-        return 'border-red-600/50 dark:border-red-600/40'
+        return `${baseStyles} ${isDark ? 'border-red-600/50 bg-slate-900/40' : 'border-red-600/60 bg-red-50/30'}`
       default:
-        return 'border-gray-400/50'
+        return baseStyles
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadgeColor = (status: string) => {
+    const isDark = theme === 'dark'
     switch (status) {
       case 'available':
-        return 'bg-emerald-500/20 text-emerald-400 dark:bg-emerald-600/30'
+        return isDark ? 'bg-emerald-500/30 text-emerald-300' : 'bg-emerald-200 text-emerald-800'
       case 'occupied':
-        return 'bg-amber-600/20 text-amber-500 dark:bg-amber-700/30'
+        return isDark ? 'bg-amber-600/30 text-amber-300' : 'bg-amber-200 text-amber-800'
       case 'reserved':
-        return 'bg-blue-500/20 text-blue-400 dark:bg-blue-600/30'
+        return isDark ? 'bg-blue-500/30 text-blue-300' : 'bg-blue-200 text-blue-800'
       case 'maintenance':
-        return 'bg-red-600/20 text-red-400 dark:bg-red-700/30'
+        return isDark ? 'bg-red-600/30 text-red-300' : 'bg-red-200 text-red-800'
       default:
-        return 'bg-gray-500/20 text-gray-400'
+        return isDark ? 'bg-gray-500/30 text-gray-300' : 'bg-gray-200 text-gray-800'
     }
   }
 
@@ -101,14 +105,28 @@ export default function TablesPage() {
 
   if (!mounted) return null
 
+  const isDark = theme === 'dark'
+
   return (
-    <div className="min-h-screen bg-slate-950 dark:bg-slate-950 text-white dark:text-white transition-colors duration-300">
+    <div
+      className={`min-h-screen transition-colors duration-300 ${
+        isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'
+      }`}
+    >
       {/* Header */}
-      <div className="border-b border-slate-700/50 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-20">
+      <div
+        className={`border-b sticky top-0 z-20 backdrop-blur-sm ${
+          isDark
+            ? 'border-slate-700/50 bg-slate-900/50'
+            : 'border-slate-200 bg-white/50'
+        }`}
+      >
         <div className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-blue-400">Tables</h1>
-            <p className="text-slate-400 mt-1">Select a table to start taking orders</p>
+            <h1 className="text-4xl font-bold text-blue-500">Tables</h1>
+            <p className={`mt-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+              Select a table to start taking orders
+            </p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -117,12 +135,16 @@ export default function TablesPage() {
               variant="outline"
               size="icon"
               onClick={() => toggleTheme()}
-              className="rounded-lg border-slate-600 hover:bg-slate-700/50 h-10 w-10"
+              className={`rounded-lg h-10 w-10 ${
+                isDark
+                  ? 'border-slate-600 hover:bg-slate-700/50'
+                  : 'border-slate-300 hover:bg-slate-100'
+              }`}
             >
               {theme === 'dark' ? (
                 <Sun className="h-5 w-5 text-yellow-400" />
               ) : (
-                <Moon className="h-5 w-5 text-slate-400" />
+                <Moon className="h-5 w-5 text-slate-600" />
               )}
             </Button>
 
@@ -132,7 +154,11 @@ export default function TablesPage() {
                 variant="outline"
                 size="icon"
                 onClick={() => router.push('/admin')}
-                className="rounded-lg border-slate-600 hover:bg-slate-700/50 h-10 w-10"
+                className={`rounded-lg h-10 w-10 ${
+                  isDark
+                    ? 'border-slate-600 hover:bg-slate-700/50 text-slate-300'
+                    : 'border-slate-300 hover:bg-slate-100 text-slate-600'
+                }`}
               >
                 <Settings className="h-5 w-5" />
               </Button>
@@ -142,215 +168,237 @@ export default function TablesPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-4 mb-10">
-          <Card className="border-emerald-500/50 bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border-2">
+        <div className="grid grid-cols-3 gap-4">
+          <Card
+            className={`rounded-xl p-6 border-2 border-emerald-500/50 ${
+              isDark ? 'bg-slate-900/40' : 'bg-emerald-50/30'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-400 text-sm font-medium">Available</p>
-                <p className="text-4xl font-bold text-emerald-400 mt-2">{availableCount}</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  Available
+                </p>
+                <p className="text-3xl font-bold text-emerald-500 mt-2">{availableCount}</p>
               </div>
-              <div className="h-14 w-14 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                <Users className="h-7 w-7 text-emerald-400" />
-              </div>
+              <Users className="h-8 w-8 text-emerald-500 opacity-50" />
             </div>
           </Card>
 
-          <Card className="border-amber-600/50 bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border-2">
+          <Card
+            className={`rounded-xl p-6 border-2 border-amber-600/50 ${
+              isDark ? 'bg-slate-900/40' : 'bg-amber-50/30'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-400 text-sm font-medium">Occupied</p>
-                <p className="text-4xl font-bold text-amber-500 mt-2">{occupiedCount}</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  Occupied
+                </p>
+                <p className="text-3xl font-bold text-amber-500 mt-2">{occupiedCount}</p>
               </div>
-              <div className="h-14 w-14 rounded-xl bg-amber-600/20 flex items-center justify-center">
-                <Users className="h-7 w-7 text-amber-500" />
-              </div>
+              <Users className="h-8 w-8 text-amber-600 opacity-50" />
             </div>
           </Card>
 
-          <Card className="border-blue-500/50 bg-slate-900/50 backdrop-blur-sm rounded-2xl p-6 border-2">
+          <Card
+            className={`rounded-xl p-6 border-2 border-blue-500/50 ${
+              isDark ? 'bg-slate-900/40' : 'bg-blue-50/30'
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-slate-400 text-sm font-medium">Reserved</p>
-                <p className="text-4xl font-bold text-blue-400 mt-2">{reservedCount}</p>
+                <p className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  Reserved
+                </p>
+                <p className="text-3xl font-bold text-blue-500 mt-2">{reservedCount}</p>
               </div>
-              <div className="h-14 w-14 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <Clock className="h-7 w-7 text-blue-400" />
-              </div>
+              <Clock className="h-8 w-8 text-blue-500 opacity-50" />
             </div>
           </Card>
         </div>
 
-        {/* Your Tables Section */}
-        <h2 className="text-2xl font-bold text-slate-200 mb-6">Your Tables</h2>
-
         {/* Tables Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {tables.map((table) => (
-            <div key={table.id}>
-              {editingTableId === table.id ? (
-                // Edit Dialog
-                <Dialog open={editingTableId === table.id} onOpenChange={(open) => !open && setEditingTableId(null)}>
-                  <DialogContent className="w-[95vw] max-w-md bg-slate-900 border-slate-700" description="Change table status and reservation time">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl text-slate-200">Edit Table {table.table_number}</DialogTitle>
-                    </DialogHeader>
+        <div>
+          <h2 className={`text-xl font-semibold mb-6 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            Your Tables
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {tables.map((table) => (
+              <div key={table.id}>
+                {editingTableId === table.id ? (
+                  <Dialog open={editingTableId === table.id} onOpenChange={(open) => !open && setEditingTableId(null)}>
+                    <DialogContent
+                      className={`w-[95vw] max-w-md rounded-xl ${
+                        isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'
+                      }`}
+                      description="Change table status with optional reservation time"
+                    >
+                      <DialogHeader>
+                        <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
+                          Table {table.table_number} Status
+                        </DialogTitle>
+                      </DialogHeader>
 
-                    <div className="space-y-5">
-                      {/* Status Selection */}
-                      <div className="space-y-3">
-                        <Label className="text-slate-300 font-semibold">Status</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {(['available', 'occupied', 'reserved', 'maintenance'] as const).map((status) => (
-                            <Button
-                              key={status}
-                              onClick={() => {
-                                if (status !== 'reserved') {
-                                  handleStatusChange(table.id, status)
-                                }
-                              }}
-                              className={`h-11 rounded-lg font-medium transition-all ${
-                                table.status === status
-                                  ? status === 'available'
-                                    ? 'bg-emerald-500/50 border-emerald-400 text-emerald-300'
-                                    : status === 'occupied'
-                                      ? 'bg-amber-600/50 border-amber-400 text-amber-300'
-                                      : status === 'reserved'
-                                        ? 'bg-blue-500/50 border-blue-400 text-blue-300'
-                                        : 'bg-red-600/50 border-red-400 text-red-300'
-                                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                              }`}
-                              variant={table.status === status ? 'default' : 'outline'}
-                            >
-                              {status.charAt(0).toUpperCase() + status.slice(1)}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Reservation Time - Only for Reserved */}
-                      <div className="border-t border-slate-700 pt-5 space-y-3">
-                        <Label className="text-slate-300 font-semibold flex items-center gap-2">
-                          <Clock className="h-4 w-4" />
-                          Reservation Time
-                        </Label>
-                        <div className="space-y-2">
-                          <div>
-                            <Label className="text-xs text-slate-400">From</Label>
-                            <Input
-                              type="datetime-local"
-                              value={reservedFrom}
-                              onChange={(e) => setReservedFrom(e.target.value)}
-                              className="mt-1 bg-slate-800 border-slate-600 text-white"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs text-slate-400">To</Label>
-                            <Input
-                              type="datetime-local"
-                              value={reservedTo}
-                              onChange={(e) => setReservedTo(e.target.value)}
-                              className="mt-1 bg-slate-800 border-slate-600 text-white"
-                            />
+                      <div className="space-y-6">
+                        {/* Status Selection */}
+                        <div className="space-y-3">
+                          <Label className={`text-base font-semibold block ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                            Select Status
+                          </Label>
+                          <div className="grid grid-cols-2 gap-3">
+                            {['available', 'occupied', 'reserved', 'maintenance'].map((status) => (
+                              <Button
+                                key={status}
+                                variant={status === editingTableId ? 'default' : 'outline'}
+                                onClick={() => {
+                                  if (status === 'reserved') {
+                                    // Show time selection
+                                  } else {
+                                    handleStatusChange(table.id, status)
+                                  }
+                                }}
+                                className={`h-12 text-sm font-medium ${
+                                  isDark
+                                    ? 'border-slate-600 hover:bg-slate-800'
+                                    : 'border-slate-300 hover:bg-slate-50'
+                                }`}
+                              >
+                                <div
+                                  className="h-2.5 w-2.5 rounded-full mr-2 flex-shrink-0"
+                                  style={{
+                                    backgroundColor:
+                                      status === 'available'
+                                        ? '#10b981'
+                                        : status === 'occupied'
+                                          ? '#f59e0b'
+                                          : status === 'reserved'
+                                            ? '#3b82f6'
+                                            : '#ef4444',
+                                  }}
+                                />
+                                {status.charAt(0).toUpperCase() + status.slice(1)}
+                              </Button>
+                            ))}
                           </div>
                         </div>
-                      </div>
 
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 border-t border-slate-700 pt-5">
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setEditingTableId(null)
-                            setReservedFrom('')
-                            setReservedTo('')
-                          }}
-                          className="flex-1 border-slate-600 hover:bg-slate-700/50"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={() => handleStatusChange(table.id, 'reserved')}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700"
-                        >
-                          Reserve
-                        </Button>
+                        {/* Time Selection */}
+                        <div className={`border-t pt-6 space-y-3 ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
+                          <Label className={`text-base font-semibold flex items-center gap-2 block ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
+                            <Clock className="h-4 w-4" />
+                            Reservation Time
+                          </Label>
+                          <div className="space-y-3">
+                            <div>
+                              <Label className="text-sm">From</Label>
+                              <Input
+                                type="datetime-local"
+                                value={reservedFrom}
+                                onChange={(e) => setReservedFrom(e.target.value)}
+                                className={`mt-1 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'}`}
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-sm">To</Label>
+                              <Input
+                                type="datetime-local"
+                                value={reservedTo}
+                                onChange={(e) => setReservedTo(e.target.value)}
+                                className={`mt-1 ${isDark ? 'bg-slate-800 border-slate-600' : 'bg-white border-slate-300'}`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className={`flex gap-3 pt-4 border-t ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setEditingTableId(null)
+                              setReservedFrom('')
+                              setReservedTo('')
+                            }}
+                            className={`flex-1 ${isDark ? 'border-slate-600 hover:bg-slate-800' : 'border-slate-300 hover:bg-slate-50'}`}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={() => handleStatusChange(table.id, 'reserved')}
+                            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white"
+                          >
+                            Reserve Table
+                          </Button>
+                        </div>
                       </div>
+                    </DialogContent>
+                  </Dialog>
+                ) : null}
+
+                {/* Table Card */}
+                <Card className={`${getTableStyles(table.status)} cursor-pointer group relative`}>
+                  <div className="space-y-3 flex-1">
+                    {/* Table Number */}
+                    <div className="text-5xl md:text-6xl font-black">{table.table_number}</div>
+
+                    {/* Capacity */}
+                    <div className={`flex items-center gap-2 text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                      <Users className="h-4 w-4" />
+                      <span className="font-medium">{table.capacity} Seats</span>
                     </div>
-                  </DialogContent>
-                </Dialog>
-              ) : null}
 
-              {/* Table Card */}
-              <Card
-                className={`relative rounded-2xl p-6 border-2 transition-all duration-300 cursor-pointer group ${getTableBorderColor(
-                  table.status
-                )} ${
-                  table.status === 'available'
-                    ? 'bg-gradient-to-br from-slate-900/80 to-slate-800/50 hover:shadow-lg hover:shadow-emerald-500/20'
-                    : table.status === 'occupied'
-                      ? 'bg-gradient-to-br from-slate-900/80 to-slate-800/50 opacity-75'
-                      : table.status === 'reserved'
-                        ? 'bg-gradient-to-br from-slate-900/80 to-slate-800/50 opacity-75'
-                        : 'bg-gradient-to-br from-slate-900/80 to-slate-800/50 opacity-75'
-                }`}
-              >
-                {/* Table Number */}
-                <div className="text-5xl font-black text-white mb-3">{table.table_number}</div>
+                    {/* Status Badge */}
+                    <Badge className={`${getStatusBadgeColor(table.status)} w-fit text-xs font-bold px-3 py-1`}>
+                      {table.status === 'available'
+                        ? 'Available'
+                        : table.status === 'occupied'
+                          ? 'Occupied'
+                          : table.status === 'reserved'
+                            ? 'Reserved'
+                            : 'Maintenance'}
+                    </Badge>
 
-                {/* Capacity */}
-                <div className="flex items-center gap-2 text-slate-400 mb-4">
-                  <Users className="h-4 w-4" />
-                  <span className="font-medium">{table.capacity} Seats</span>
-                </div>
+                    {/* Reservation Time */}
+                    {table.status === 'reserved' && table.reserved_from && table.reserved_to && (
+                      <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                        {formatReservationTime(table.reserved_from, table.reserved_to)}
+                      </p>
+                    )}
+                  </div>
 
-                {/* Status Badge */}
-                <Badge className={`${getStatusColor(table.status)} font-semibold mb-2 text-sm px-3 py-1 rounded-full`}>
-                  {table.status === 'available'
-                    ? 'Available'
-                    : table.status === 'occupied'
-                      ? 'Occupied'
-                      : table.status === 'reserved'
-                        ? 'Reserved'
-                        : 'Maintenance'}
-                </Badge>
-
-                {/* Reservation Time */}
-                {table.status === 'reserved' && table.reserved_from && table.reserved_to && (
-                  <p className="text-xs text-slate-400 mt-2 font-medium">
-                    {formatReservationTime(table.reserved_from, table.reserved_to)}
-                  </p>
-                )}
-
-                {/* Select Button - Only for Available */}
-                {table.status === 'available' && (
+                  {/* Edit Button - Always Visible */}
                   <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-3 right-3 h-8 w-8 opacity-100"
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleSelectTable(table.id)
+                      setEditingTableId(table.id)
                     }}
-                    className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg"
+                    title="Change status"
                   >
-                    Select
+                    <Edit2 className="h-4 w-4" />
                   </Button>
-                )}
 
-                {/* Edit Button - Always Visible */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setEditingTableId(table.id)
-                  }}
-                  className="absolute top-3 right-3 h-9 w-9 bg-slate-800/50 hover:bg-slate-700 rounded-lg opacity-100 group-hover:bg-slate-600 transition-all"
-                >
-                  <Edit2 className="h-4 w-4 text-slate-300" />
-                </Button>
-              </Card>
-            </div>
-          ))}
+                  {/* Select Button */}
+                  {table.status === 'available' && (
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleSelectTable(table.id)
+                      }}
+                      className="w-full mt-4 bg-slate-900 hover:bg-slate-800 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
+                    >
+                      Select
+                    </Button>
+                  )}
+                </Card>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
