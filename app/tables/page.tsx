@@ -168,7 +168,7 @@ export default function TablesPage() {
         <div>
           <h2 className="text-2xl md:text-3xl font-bold mb-6">Your Tables</h2>
 
-          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3">
             {tables.map((table) => {
               const isAvailable = table.status === 'available'
               const isEditing = editingTableId === table.id
@@ -205,53 +205,51 @@ export default function TablesPage() {
                       </Button>
                     </Card>
                   ) : (
-                    <Card className={`rounded-lg md:rounded-xl p-3 md:p-4 border-2 h-full flex flex-col justify-between ${getTableCardBorder(table.status)} ${theme === 'dark' ? 'bg-slate-900/50' : 'bg-slate-50/50'}`}>
-                      <div className="space-y-2">
-                        {/* Header */}
-                        <div className="flex items-start justify-between">
-                          <div className="text-2xl md:text-3xl font-black">{table.table_number}</div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setEditingTableId(table.id)
-                              setEditStatus(table.status)
-                            }}
-                            className="h-6 w-6 md:h-7 md:w-7 flex-shrink-0"
-                          >
-                            <Edit2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
-                          </Button>
-                        </div>
-
-                        {/* Capacity */}
-                        <div className="flex items-center gap-1 text-xs md:text-sm text-muted-foreground">
-                          <Users className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />
-                          <span className="font-medium">{table.capacity} Seats</span>
-                        </div>
-
-                        {/* Status Badge - NO truncate class */}
-                        <Badge className={`${getStatusBadgeColor(table.status)} text-xs font-semibold px-3 md:px-4 py-1 md:py-1.5 rounded-full inline-block`}>
-                          {table.status === 'available'
-                            ? 'Available'
-                            : table.status === 'occupied'
-                              ? 'Occupied'
-                              : table.status === 'reserved'
-                                ? 'Reserved'
-                                : 'Maintenance'}
-                        </Badge>
-
-                        {/* Reservation Time */}
-                        {table.status === 'reserved' && table.reserved_from && table.reserved_to && (
-                          <p className="text-xs text-muted-foreground/70 font-medium">{formatReservationTime(table.reserved_from, table.reserved_to)}</p>
-                        )}
+                    <Card className={`rounded-lg md:rounded-xl p-2.5 md:p-3 border-2 aspect-square flex flex-col justify-between overflow-hidden ${getTableCardBorder(table.status)} ${theme === 'dark' ? 'bg-slate-900/50' : 'bg-slate-50/50'}`}>
+                      {/* Compact Header */}
+                      <div className="flex items-center justify-between gap-1 flex-shrink-0">
+                        <div className="text-xl md:text-2xl font-black leading-none">{table.table_number}</div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setEditingTableId(table.id)
+                            setEditStatus(table.status)
+                          }}
+                          className="h-5 w-5 md:h-6 md:w-6 flex-shrink-0"
+                        >
+                          <Edit2 className="h-2.5 w-2.5 md:h-3 md:w-3" />
+                        </Button>
                       </div>
 
-                      {/* Select Button */}
+                      {/* Capacity - Minimal Spacing */}
+                      <div className="flex items-center gap-0.5 text-xs text-muted-foreground flex-shrink-0">
+                        <Users className="h-2.5 w-2.5 md:h-3 md:w-3 flex-shrink-0" />
+                        <span className="font-medium">{table.capacity} Seats</span>
+                      </div>
+
+                      {/* Status Badge - Compact */}
+                      <Badge className={`${getStatusBadgeColor(table.status)} text-xs font-semibold px-2 md:px-2.5 py-0.5 md:py-1 rounded-full inline-block self-center flex-shrink-0`}>
+                        {table.status === 'available'
+                          ? 'Available'
+                          : table.status === 'occupied'
+                            ? 'Occupied'
+                            : table.status === 'reserved'
+                              ? 'Reserved'
+                              : 'Maintenance'}
+                      </Badge>
+
+                      {/* Reservation Time - Only if Reserved */}
+                      {table.status === 'reserved' && table.reserved_from && table.reserved_to && (
+                        <p className="text-xs text-muted-foreground/60 font-medium text-center leading-tight flex-shrink-0">{formatReservationTime(table.reserved_from, table.reserved_to)}</p>
+                      )}
+
+                      {/* Select Button - Bottom */}
                       {isAvailable && (
                         <Button
                           size="sm"
                           onClick={() => handleSelectTable(table.id)}
-                          className="w-full mt-2 text-xs md:text-sm h-8 md:h-9 rounded-lg"
+                          className="w-full text-xs md:text-sm h-7 md:h-8 rounded-md mt-auto flex-shrink-0"
                         >
                           Select
                         </Button>
