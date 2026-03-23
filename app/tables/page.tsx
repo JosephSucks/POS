@@ -1,68 +1,78 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTable } from '@/app/context/table-context'
-import { useTheme } from '@/hooks/use-theme'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Users, Clock, Settings, Moon, Sun, Edit2, X } from 'lucide-react'
-import { useState } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Users, Edit2, Moon, Sun, Settings } from 'lucide-react'
+
+interface Table {
+  id: string
+  table_number: number
+  capacity: number
+  status: 'available' | 'occupied' | 'reserved' | 'maintenance'
+  reserved_from?: string
+  reserved_to?: string
+}
 
 export default function TablesPage() {
   const router = useRouter()
-  const { tables, selectTable, updateTableStatus } = useTable()
-  const { theme, toggleTheme, mounted } = useTheme()
-  const [editingTableId, setEditingTableId] = useState<number | null>(null)
-  const [reservedFrom, setReservedFrom] = useState<string>('')
-  const [reservedTo, setReservedTo] = useState<string>('')
-  const isAdmin = true
+  const [tables, setTables] = useState<Table[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editingTableId, setEditingTableId] = useState<string | null>(null)
+  const [editStatus, setEditStatus] = useState('')
+  const [theme, setTheme] = useState('light')
 
-  const handleSelectTable = (tableId: number) => {
-    selectTable(tableId)
-    router.push('/pos')
-  }
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('pos-theme') || 'light'
+    setTheme(savedTheme)
+    document.documentElement.classList.toggle('dark', savedTheme === 'dark')
 
-  const handleStatusChange = async (tableId: number, newStatus: string) => {
-    if (newStatus === 'reserved') {
-      if (!reservedFrom || !reservedTo) {
-        alert('Please select reservation times')
-        return
-      }
-      const fromDate = new Date(reservedFrom)
-      const toDate = new Date(reservedTo)
-      await updateTableStatus(tableId, newStatus, fromDate, toDate)
-    } else {
-      await updateTableStatus(tableId, newStatus)
-    }
-    setEditingTableId(null)
-    setReservedFrom('')
-    setReservedTo('')
-  }
+    fetchTables()
+  }, [])
 
-  const formatReservationTime = (from: string | null, to: string | null) => {
-    if (!from || !to) return null
+  const fetchTables = async () => {
     try {
-      const fromDate = new Date(from)
-      const toDate = new Date(to)
-      return `${fromDate.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-      })}-${toDate.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-      })}`
-    } catch {
-      return null
+      const response = await fetch('/api/tables')
+      if (!response.ok) throw new Error('Failed to fetch tables')
+      const data = await response.json()
+      setTables(data)
+    } catch (error) {
+      console.error('Error fetching tables:', error)
+    } finally {
+      setLoading(false)
     }
+  }
+
+  const handleSelectTable = (tableId: string) => {
+    router.push(`/pos?tableId=${tableId}`)
+  }
+
+  const handleUpdateStatus = async (tableId: string, newStatus: string) => {
+    try {
+      const response = await fetch(`/api/tables/${tableId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      if (!response.ok) throw new Error('Failed to update table')
+      setTables(tables.map(t => t.id === tableId ? { ...t, status: newStatus as any } : t))
+      setEditingTableId(null)
+      setEditStatus('')
+    } catch (error) {
+      console.error('Error updating table:', error)
+    }
+  }
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light'
+    setTheme(newTheme)
+    localStorage.setItem('pos-theme', newTheme)
+    document.documentElement.classList.toggle('dark', newTheme === 'dark')
   }
 
   const getStatusBadgeColor = (status: string) => {
@@ -77,270 +87,139 @@ export default function TablesPage() {
       case 'maintenance':
         return isDark ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-red-100 text-red-700 border border-red-300'
       default:
-        return isDark ? 'bg-gray-500/20 text-gray-400 border border-gray-500/40' : 'bg-gray-100 text-gray-700 border border-gray-300'
+        return isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-gray-100 text-gray-700'
     }
   }
 
   const getTableCardBorder = (status: string) => {
     switch (status) {
       case 'available':
-        return 'border-emerald-500/50'
+        return 'border-emerald-500'
       case 'occupied':
-        return 'border-amber-600/50'
+        return 'border-amber-600'
       case 'reserved':
-        return 'border-blue-500/50'
+        return 'border-blue-500'
       case 'maintenance':
-        return 'border-red-600/50'
+        return 'border-red-500'
       default:
-        return 'border-slate-300/50'
+        return 'border-gray-300'
     }
   }
 
-  const availableCount = tables.filter((t) => t.status === 'available').length
-  const occupiedCount = tables.filter((t) => t.status === 'occupied').length
-  const reservedCount = tables.filter((t) => t.status === 'reserved').length
+  const formatReservationTime = (from: string, to: string) => {
+    const fromDate = new Date(from).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+    const toDate = new Date(to).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+    return `${fromDate}-${toDate}`
+  }
 
-  if (!mounted) return null
+  const availableCount = tables.filter(t => t.status === 'available').length
+  const occupiedCount = tables.filter(t => t.status === 'occupied').length
+  const reservedCount = tables.filter(t => t.status === 'reserved').length
 
-  const isDark = theme === 'dark'
+  if (loading) return <div className="p-6">Loading tables...</div>
 
   return (
-    <div
-      className={`min-h-screen transition-colors duration-300 ${
-        isDark ? 'bg-slate-950 text-white' : 'bg-white text-slate-900'
-      }`}
-    >
-      {/* Header */}
-      <div
-        className={`border-b sticky top-0 z-20 backdrop-blur-sm ${
-          isDark
-            ? 'border-slate-700/50 bg-slate-900/50'
-            : 'border-slate-200 bg-slate-50/50'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6 flex items-center justify-between">
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-slate-950 text-white' : 'bg-white text-black'}`}>
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-8">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold text-blue-500">Tables</h1>
-            <p className={`text-sm md:text-base mt-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <h1 className="text-4xl md:text-5xl font-bold text-blue-500 mb-2">Tables</h1>
+            <p className={`text-sm md:text-base ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>
               Select a table to start taking orders
             </p>
           </div>
-
-          <div className="flex items-center gap-2 md:gap-3">
-            {/* Dark/Light Mode Toggle */}
+          <div className="flex gap-2">
             <Button
               variant="outline"
               size="icon"
-              onClick={() => toggleTheme()}
-              className={`rounded-lg h-9 w-9 md:h-10 md:w-10 ${
-                isDark
-                  ? 'border-slate-600 hover:bg-slate-700/50'
-                  : 'border-slate-300 hover:bg-slate-100'
-              }`}
+              onClick={toggleTheme}
+              className="rounded-lg"
             >
-              {theme === 'dark' ? (
-                <Sun className="h-4 w-4 md:h-5 md:w-5 text-yellow-400" />
-              ) : (
-                <Moon className="h-4 w-4 md:h-5 md:w-5 text-slate-600" />
-              )}
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
-
-            {/* Admin Settings Button */}
-            {isAdmin && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => router.push('/admin')}
-                className={`rounded-lg h-9 w-9 md:h-10 md:w-10 ${
-                  isDark
-                    ? 'border-slate-600 hover:bg-slate-700/50 text-slate-300'
-                    : 'border-slate-300 hover:bg-slate-100 text-slate-600'
-                }`}
-              >
-                <Settings className="h-4 w-4 md:h-5 md:w-5" />
+            <Link href="/admin">
+              <Button variant="outline" size="icon" className="rounded-lg">
+                <Settings className="h-5 w-5" />
               </Button>
-            )}
+            </Link>
           </div>
         </div>
-      </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6 md:space-y-8">
-        {/* Stats Cards - Smaller size */}
-        <div className="grid grid-cols-3 gap-3 md:gap-4 max-w-md md:max-w-lg">
-          <Card
-            className={`rounded-xl p-3 md:p-4 border-2 border-emerald-500 overflow-hidden flex flex-col items-center justify-center aspect-square ${
-              isDark ? 'bg-slate-900' : 'bg-white'
-            }`}
-          >
-            <p className={`text-xs font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-              Available
-            </p>
+        {/* Stats Cards - Compact */}
+        <div className="grid grid-cols-3 gap-3 md:gap-4 mb-8 max-w-sm">
+          <Card className={`rounded-xl p-3 md:p-4 border-2 border-emerald-500 overflow-hidden flex flex-col items-center justify-center aspect-square ${theme === 'dark' ? 'bg-slate-900' : 'bg-white'}`}>
+            <p className={`text-xs font-medium text-center ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>Available</p>
             <p className="text-3xl md:text-4xl font-bold text-emerald-500 text-center leading-tight mt-1">{availableCount}</p>
           </Card>
 
-          <Card
-            className={`rounded-xl p-3 md:p-4 border-2 border-amber-600 overflow-hidden flex flex-col items-center justify-center aspect-square ${
-              isDark ? 'bg-slate-900' : 'bg-white'
-            }`}
-          >
-            <p className={`text-xs font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-              Occupied
-            </p>
+          <Card className={`rounded-xl p-3 md:p-4 border-2 border-amber-600 overflow-hidden flex flex-col items-center justify-center aspect-square ${theme === 'dark' ? 'bg-slate-900' : 'bg-white'}`}>
+            <p className={`text-xs font-medium text-center ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>Occupied</p>
             <p className="text-3xl md:text-4xl font-bold text-amber-500 text-center leading-tight mt-1">{occupiedCount}</p>
           </Card>
 
-          <Card
-            className={`rounded-xl p-3 md:p-4 border-2 border-blue-500 overflow-hidden flex flex-col items-center justify-center aspect-square ${
-              isDark ? 'bg-slate-900' : 'bg-white'
-            }`}
-          >
-            <p className={`text-xs font-medium text-center ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-              Reserved
-            </p>
+          <Card className={`rounded-xl p-3 md:p-4 border-2 border-blue-500 overflow-hidden flex flex-col items-center justify-center aspect-square ${theme === 'dark' ? 'bg-slate-900' : 'bg-white'}`}>
+            <p className={`text-xs font-medium text-center ${theme === 'dark' ? 'text-slate-400' : 'text-slate-600'}`}>Reserved</p>
             <p className="text-3xl md:text-4xl font-bold text-blue-500 text-center leading-tight mt-1">{reservedCount}</p>
           </Card>
         </div>
 
-        {/* Tables Section */}
+        {/* Your Tables Section */}
         <div>
-          <h2 className={`text-xl md:text-2xl font-semibold mb-4 ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
-            Your Tables
-          </h2>
+          <h2 className="text-2xl md:text-3xl font-bold mb-6">Your Tables</h2>
 
-          {/* Table Grid - Responsive */}
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-3">
             {tables.map((table) => {
               const isAvailable = table.status === 'available'
+              const isEditing = editingTableId === table.id
 
               return (
                 <div key={table.id}>
-                  {editingTableId === table.id ? (
-                    // Edit Modal
-                    <Dialog open={editingTableId === table.id} onOpenChange={(open) => !open && setEditingTableId(null)}>
-                      <DialogContent
-                        className={`w-[95vw] max-w-md rounded-xl ${
-                          isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'
-                        }`}
-                        description="Change table status and set reservation times"
+                  {isEditing ? (
+                    <Card className={`rounded-lg md:rounded-xl p-3 md:p-4 border-2 space-y-3 ${theme === 'dark' ? 'bg-slate-800' : 'bg-slate-50'}`}>
+                      <Select value={editStatus} onValueChange={setEditStatus}>
+                        <SelectTrigger className="text-xs md:text-sm">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="available">Available</SelectItem>
+                          <SelectItem value="occupied">Occupied</SelectItem>
+                          <SelectItem value="reserved">Reserved</SelectItem>
+                          <SelectItem value="maintenance">Maintenance</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        size="sm"
+                        onClick={() => handleUpdateStatus(table.id, editStatus)}
+                        className="w-full text-xs md:text-sm h-8"
                       >
-                        <DialogHeader>
-                          <DialogTitle className={isDark ? 'text-white' : 'text-slate-900'}>
-                            Table {table.table_number} Status
-                          </DialogTitle>
-                        </DialogHeader>
-
-                        <div className="space-y-4">
-                          {/* Status Selection */}
-                          <div className="space-y-2">
-                            <Label className="text-base font-semibold">Select Status</Label>
-                            <div className="grid grid-cols-2 gap-2">
-                              {['available', 'occupied', 'reserved', 'maintenance'].map((status) => (
-                                <Button
-                                  key={status}
-                                  variant={status === 'reserved' ? 'default' : 'outline'}
-                                  onClick={() => {
-                                    if (status !== 'reserved') {
-                                      handleStatusChange(table.id, status)
-                                    }
-                                  }}
-                                  className={`h-11 text-sm font-medium rounded-lg ${
-                                    isDark && status !== 'reserved' ? 'bg-slate-800 hover:bg-slate-700 border-slate-600' : ''
-                                  }`}
-                                >
-                                  <div
-                                    className="h-2.5 w-2.5 rounded-full mr-2 flex-shrink-0"
-                                    style={{
-                                      backgroundColor:
-                                        status === 'available'
-                                          ? '#10b981'
-                                          : status === 'occupied'
-                                            ? '#f59e0b'
-                                            : status === 'reserved'
-                                              ? '#3b82f6'
-                                              : '#ef4444',
-                                    }}
-                                  />
-                                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Time Selection for Reserved */}
-                          <div className="border-t pt-4 space-y-3" style={{ borderColor: isDark ? '#475569' : '#e2e8f0' }}>
-                            <Label className="text-base font-semibold flex items-center gap-2">
-                              <Clock className="h-4 w-4" />
-                              Reservation Time
-                            </Label>
-                            <div className="space-y-2">
-                              <div>
-                                <Label className="text-sm">From</Label>
-                                <Input
-                                  type="datetime-local"
-                                  value={reservedFrom}
-                                  onChange={(e) => setReservedFrom(e.target.value)}
-                                  className={`mt-1 rounded-lg ${isDark ? 'bg-slate-800 border-slate-600' : ''}`}
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-sm">To</Label>
-                                <Input
-                                  type="datetime-local"
-                                  value={reservedTo}
-                                  onChange={(e) => setReservedTo(e.target.value)}
-                                  className={`mt-1 rounded-lg ${isDark ? 'bg-slate-800 border-slate-600' : ''}`}
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Action Buttons */}
-                          <div className="flex gap-2 pt-4 border-t" style={{ borderColor: isDark ? '#475569' : '#e2e8f0' }}>
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                setEditingTableId(null)
-                                setReservedFrom('')
-                                setReservedTo('')
-                              }}
-                              className="flex-1"
-                            >
-                              Cancel
-                            </Button>
-                            <Button onClick={() => handleStatusChange(table.id, 'reserved')} className="flex-1">
-                              Reserve Table
-                            </Button>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                        Update
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditingTableId(null)}
+                        className="w-full text-xs md:text-sm h-8"
+                      >
+                        Cancel
+                      </Button>
+                    </Card>
                   ) : (
-                    // Table Card Display - Improved Design
-                    <Card
-                      className={`rounded-lg md:rounded-xl p-3 md:p-4 border-2 h-full flex flex-col justify-between overflow-hidden ${
-                        getTableCardBorder(table.status)
-                      } ${
-                        isDark
-                          ? 'bg-slate-900/50'
-                          : 'bg-slate-50/50'
-                      }`}
-                    >
-                      <div className="space-y-2.5">
-                        {/* Header: Table Number and Edit Button */}
+                    <Card className={`rounded-lg md:rounded-xl p-3 md:p-4 border-2 h-full flex flex-col justify-between ${getTableCardBorder(table.status)} ${theme === 'dark' ? 'bg-slate-900/50' : 'bg-slate-50/50'}`}>
+                      <div className="space-y-2">
+                        {/* Header */}
                         <div className="flex items-start justify-between">
-                          <div className="text-2xl md:text-3xl font-black text-foreground">{table.table_number}</div>
+                          <div className="text-2xl md:text-3xl font-black">{table.table_number}</div>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setEditingTableId(table.id)}
-                            className={`h-7 w-7 md:h-8 md:w-8 rounded-md flex-shrink-0 ${
-                              isDark
-                                ? 'text-slate-400'
-                                : 'text-slate-600'
-                            }`}
+                            onClick={() => {
+                              setEditingTableId(table.id)
+                              setEditStatus(table.status)
+                            }}
+                            className="h-6 w-6 md:h-7 md:w-7 flex-shrink-0"
                           >
-                            <Edit2 className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                            <Edit2 className="h-3 w-3 md:h-3.5 md:w-3.5" />
                           </Button>
                         </div>
 
@@ -350,8 +229,8 @@ export default function TablesPage() {
                           <span className="font-medium">{table.capacity} Seats</span>
                         </div>
 
-                        {/* Status Badge - No hover effects */}
-                        <Badge className={`${getStatusBadgeColor(table.status)} text-xs font-semibold px-2.5 md:px-3 py-1 rounded-full w-fit truncate`}>
+                        {/* Status Badge - NO truncate class */}
+                        <Badge className={`${getStatusBadgeColor(table.status)} text-xs font-semibold px-3 md:px-4 py-1 md:py-1.5 rounded-full inline-block`}>
                           {table.status === 'available'
                             ? 'Available'
                             : table.status === 'occupied'
@@ -367,12 +246,12 @@ export default function TablesPage() {
                         )}
                       </div>
 
-                      {/* Select Button for Available Tables */}
+                      {/* Select Button */}
                       {isAvailable && (
                         <Button
                           size="sm"
                           onClick={() => handleSelectTable(table.id)}
-                          className="w-full mt-2.5 text-xs md:text-sm h-8 md:h-9 rounded-lg"
+                          className="w-full mt-2 text-xs md:text-sm h-8 md:h-9 rounded-lg"
                         >
                           Select
                         </Button>
