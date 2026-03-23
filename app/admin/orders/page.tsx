@@ -23,11 +23,11 @@ interface OrderDetails extends Transaction {
 }
 
 const orderStatuses = [
-  { value: "pending", label: "Pending", color: "bg-orange-100 text-orange-800 border-orange-200" },
-  { value: "processing", label: "Processing", color: "bg-blue-100 text-blue-800 border-blue-200" },
-  { value: "completed", label: "Completed", color: "bg-green-100 text-green-800 border-green-200" },
-  { value: "cancelled", label: "Cancelled", color: "bg-red-100 text-red-800 border-red-200" },
-  { value: "refunded", label: "Refunded", color: "bg-purple-100 text-purple-800 border-purple-200" },
+  { value: "pending", label: "Pending", color: "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-500/40" },
+  { value: "processing", label: "Processing", color: "bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-300 dark:border-blue-500/40" },
+  { value: "completed", label: "Completed", color: "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-500/40" },
+  { value: "cancelled", label: "Cancelled", color: "bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 border-red-300 dark:border-red-500/40" },
+  { value: "refunded", label: "Refunded", color: "bg-slate-100 dark:bg-slate-500/20 text-slate-700 dark:text-slate-400 border-slate-300 dark:border-slate-500/40" },
 ]
 export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderDetails[]>([])

@@ -157,47 +157,51 @@ export default function AdminDashboard() {
 
       {/* KPI Cards - TODAY ONLY */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        {/* Today's Sales - Emerald */}
+        <Card className="border-2 border-emerald-500/50 dark:border-emerald-500/40">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Today's Sales</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <DollarSign className="h-5 w-5 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${stats.totalSales.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Total revenue today</p>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">${stats.totalSales.toFixed(2)}</div>
+            <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-1">Total revenue today</p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Today's Orders - Blue */}
+        <Card className="border-2 border-blue-500/50 dark:border-blue-500/40">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Today's Orders</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+            <ShoppingCart className="h-5 w-5 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalOrders}</div>
-            <p className="text-xs text-muted-foreground mt-1">Transactions completed</p>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.totalOrders}</div>
+            <p className="text-xs text-blue-600/70 dark:text-blue-400/70 mt-1">Transactions completed</p>
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Today's Customers - Amber */}
+        <Card className="border-2 border-amber-500/50 dark:border-amber-500/40">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Today's Customers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <Users className="h-5 w-5 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalCustomers}</div>
-            <p className="text-xs text-muted-foreground mt-1">Unique customers</p>
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.totalCustomers}</div>
+            <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">Unique customers</p>
           </CardContent>
         </Card>
 
-        <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
+        {/* Low Stock Alerts - Red */}
+        <Card className="border-2 border-red-500/50 dark:border-red-500/40">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+            <AlertTriangle className="h-5 w-5 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.lowStockItems}</div>
-            <p className="text-xs text-red-600 dark:text-red-400 mt-1">Items need restocking</p>
+            <p className="text-xs text-red-600/70 dark:text-red-400/70 mt-1">Items need restocking</p>
           </CardContent>
         </Card>
       </div>
@@ -259,7 +263,9 @@ export default function AdminDashboard() {
                 stats.topProducts.map((product, index) => (
                   <div key={product.id} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium">
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white ${
+                        index === 0 ? 'bg-emerald-500' : index === 1 ? 'bg-amber-500' : index === 2 ? 'bg-blue-500' : 'bg-red-500'
+                      }`}>
                         {index + 1}
                       </div>
                       <div>
@@ -322,31 +328,28 @@ export default function AdminDashboard() {
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Button 
-              className="h-20 flex-col gap-2"
+              className="h-20 flex-col gap-2 bg-emerald-500 hover:bg-emerald-600 text-white"
               onClick={() => router.push('/admin/products')}
             >
               <Package className="h-6 w-6" />
               Add Product
             </Button>
             <Button 
-              variant="outline" 
-              className="h-20 flex-col gap-2 bg-transparent"
+              className="h-20 flex-col gap-2 bg-blue-500 hover:bg-blue-600 text-white"
               onClick={() => router.push('/admin/orders')}
             >
               <ShoppingCart className="h-6 w-6" />
               View Orders
             </Button>
             <Button 
-              variant="outline" 
-              className="h-20 flex-col gap-2 bg-transparent"
+              className="h-20 flex-col gap-2 bg-amber-500 hover:bg-amber-600 text-white"
               onClick={() => router.push('/admin/customers')}
             >
               <Users className="h-6 w-6" />
               Manage Customers
             </Button>
             <Button 
-              variant="outline" 
-              className="h-20 flex-col gap-2 bg-transparent"
+              className="h-20 flex-col gap-2 bg-red-500 hover:bg-red-600 text-white"
               onClick={() => router.push('/admin/analytics')}
             >
               <BarChart3 className="h-6 w-6" />
