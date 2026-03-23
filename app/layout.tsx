@@ -23,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} bg-background text-foreground transition-colors duration-300`}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem storageKey="pos-theme">
+        <ThemeProvider>
           <TableProvider>
             <CartProvider>{children}</CartProvider>
           </TableProvider>
