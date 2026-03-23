@@ -69,15 +69,15 @@ export default function TablesPage() {
     const isDark = theme === 'dark'
     switch (status) {
       case 'available':
-        return isDark ? 'bg-emerald-500/30 text-emerald-300 border-emerald-500/50' : 'bg-emerald-200 text-emerald-800 border-emerald-300'
+        return isDark ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-emerald-100 text-emerald-700 border border-emerald-300'
       case 'occupied':
-        return isDark ? 'bg-amber-600/30 text-amber-300 border-amber-600/50' : 'bg-amber-200 text-amber-800 border-amber-300'
+        return isDark ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'bg-amber-100 text-amber-700 border border-amber-300'
       case 'reserved':
-        return isDark ? 'bg-blue-500/30 text-blue-300 border-blue-500/50' : 'bg-blue-200 text-blue-800 border-blue-300'
+        return isDark ? 'bg-blue-500/20 text-blue-400 border border-blue-500/40' : 'bg-blue-100 text-blue-700 border border-blue-300'
       case 'maintenance':
-        return isDark ? 'bg-red-600/30 text-red-300 border-red-600/50' : 'bg-rose-200 text-rose-900 border-rose-300'
+        return isDark ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-red-100 text-red-700 border border-red-300'
       default:
-        return isDark ? 'bg-gray-500/30 text-gray-300' : 'bg-gray-200 text-gray-800'
+        return isDark ? 'bg-gray-500/20 text-gray-400 border border-gray-500/40' : 'bg-gray-100 text-gray-700 border border-gray-300'
     }
   }
 
