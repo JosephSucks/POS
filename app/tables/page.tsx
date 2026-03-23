@@ -1,37 +1,42 @@
-"use client"
+'use client'
 
-import { useRouter } from "next/navigation"
-import { useTable } from "@/app/context/table-context"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useRouter } from 'next/navigation'
+import { useTable } from '@/app/context/table-context'
+import { useTheme } from '@/hooks/use-theme'
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Users, Edit2, Clock } from "lucide-react"
-import { useState } from "react"
+} from '@/components/ui/dialog'
+import { SettingsModal } from '@/components/settings-modal'
+import { Users, Clock, Settings, ChevronRight, Zap } from 'lucide-react'
+import { useState } from 'react'
 
 export default function TablesPage() {
   const router = useRouter()
   const { tables, selectTable, updateTableStatus } = useTable()
+  const { theme, toggleTheme, mounted } = useTheme()
   const [editingTableId, setEditingTableId] = useState<number | null>(null)
-  const [reservedFrom, setReservedFrom] = useState<string>("")
-  const [reservedTo, setReservedTo] = useState<string>("")
+  const [reservedFrom, setReservedFrom] = useState<string>('')
+  const [reservedTo, setReservedTo] = useState<string>('')
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const isAdmin = true // In real app, check user role from context/auth
 
   const handleSelectTable = (tableId: number) => {
     selectTable(tableId)
-    router.push("/pos")
+    router.push('/pos')
   }
 
   const handleStatusChange = async (tableId: number, newStatus: string) => {
-    if (newStatus === "reserved") {
+    if (newStatus === 'reserved') {
       if (!reservedFrom || !reservedTo) {
-        alert("Please select reservation times")
+        alert('Please select reservation times')
         return
       }
       const fromDate = new Date(reservedFrom)
@@ -41,8 +46,8 @@ export default function TablesPage() {
       await updateTableStatus(tableId, newStatus)
     }
     setEditingTableId(null)
-    setReservedFrom("")
-    setReservedTo("")
+    setReservedFrom('')
+    setReservedTo('')
   }
 
   const formatReservationTime = (from: string | null, to: string | null) => {
@@ -50,143 +55,211 @@ export default function TablesPage() {
     try {
       const fromDate = new Date(from)
       const toDate = new Date(to)
-      return `${fromDate.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })}-${toDate.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
+      return `${fromDate.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })}-${toDate.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
       })}`
     } catch {
       return null
     }
   }
 
-  const availableCount = tables.filter((t) => t.status === "available").length
-  const occupiedCount = tables.filter((t) => t.status === "occupied").length
-  const reservedCount = tables.filter((t) => t.status === "reserved").length
+  const availableCount = tables.filter((t) => t.status === 'available').length
+  const occupiedCount = tables.filter((t) => t.status === 'occupied').length
+  const reservedCount = tables.filter((t) => t.status === 'reserved').length
+
+  if (!mounted) return null
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b p-4 md:p-6">
-        <h1 className="text-2xl md:text-4xl font-bold tracking-tight">Tables</h1>
-        <p className="text-sm text-muted-foreground mt-1">Select a table to start taking orders</p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-800/50">
+      {/* Header with Settings */}
+      <div className="sticky top-0 z-20 backdrop-blur-md bg-background/80 dark:bg-slate-950/80 border-b border-border/40">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+              Tables
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Select a table to start taking orders
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSettingsOpen(true)}
+            className="rounded-full h-10 w-10 hover:bg-primary/10"
+          >
+            <Settings className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
 
-      <div className="p-4 md:p-8 space-y-6">
-        {/* Stats Grid - Mobile Optimized */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/50 dark:to-emerald-900/30 p-3 md:p-4 rounded-lg border border-emerald-200 dark:border-emerald-800">
-            <p className="text-xs md:text-sm text-emerald-700 dark:text-emerald-300 font-medium">Available</p>
-            <p className="text-2xl md:text-3xl font-bold text-emerald-600 dark:text-emerald-300 mt-1">{availableCount}</p>
-          </div>
-          <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/50 dark:to-amber-900/30 p-3 md:p-4 rounded-lg border border-amber-200 dark:border-amber-800">
-            <p className="text-xs md:text-sm text-amber-700 dark:text-amber-300 font-medium">Occupied</p>
-            <p className="text-2xl md:text-3xl font-bold text-amber-600 dark:text-amber-300 mt-1">{occupiedCount}</p>
-          </div>
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/50 dark:to-blue-900/30 p-3 md:p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-            <p className="text-xs md:text-sm text-blue-700 dark:text-blue-300 font-medium">Reserved</p>
-            <p className="text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-300 mt-1">{reservedCount}</p>
-          </div>
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 space-y-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-3 gap-2 md:gap-4">
+          <Card className="p-4 md:p-6 bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20 border-emerald-200 dark:border-emerald-800/50 hover:shadow-lg transition-all">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-emerald-200 dark:bg-emerald-800/50 flex items-center justify-center">
+                <Users className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-xs md:text-sm text-muted-foreground font-medium">
+                  Available
+                </p>
+                <p className="text-2xl md:text-3xl font-bold text-emerald-700 dark:text-emerald-400">
+                  {availableCount}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 md:p-6 bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/40 dark:to-amber-900/20 border-amber-200 dark:border-amber-800/50 hover:shadow-lg transition-all">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-amber-200 dark:bg-amber-800/50 flex items-center justify-center">
+                <Zap className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="text-xs md:text-sm text-muted-foreground font-medium">
+                  Occupied
+                </p>
+                <p className="text-2xl md:text-3xl font-bold text-amber-700 dark:text-amber-400">
+                  {occupiedCount}
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="p-4 md:p-6 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/40 dark:to-blue-900/20 border-blue-200 dark:border-blue-800/50 hover:shadow-lg transition-all">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-full bg-blue-200 dark:bg-blue-800/50 flex items-center justify-center">
+                <Clock className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-xs md:text-sm text-muted-foreground font-medium">
+                  Reserved
+                </p>
+                <p className="text-2xl md:text-3xl font-bold text-blue-700 dark:text-blue-400">
+                  {reservedCount}
+                </p>
+              </div>
+            </div>
+          </Card>
         </div>
 
-        {/* Tables Grid - Mobile First */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-          {tables.map((table) => {
-            const isAvailable = table.status === "available"
-            const isOccupied = table.status === "occupied"
-            const isReserved = table.status === "reserved"
-            const isMaintenance = table.status === "maintenance"
-
-            return (
+        {/* Tables Grid */}
+        <div>
+          <h2 className="text-lg font-semibold mb-6 text-muted-foreground">
+            Your Tables
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+            {tables.map((table) => (
               <div key={table.id}>
                 {editingTableId === table.id ? (
-                  <Dialog open={true} onOpenChange={(open) => !open && setEditingTableId(null)}>
-                    <DialogContent className="w-[90vw] max-w-sm" description="Change table status">
+                  <Dialog
+                    open={editingTableId === table.id}
+                    onOpenChange={(open) => !open && setEditingTableId(null)}
+                  >
+                    <DialogContent className="w-[90vw] max-w-md" description="Change table status and reservation time">
                       <DialogHeader>
                         <DialogTitle>Table {table.table_number}</DialogTitle>
                       </DialogHeader>
-                      <div className="space-y-4 py-4">
+                      <div className="space-y-4">
                         {/* Status Selection */}
-                        <div className="space-y-3">
-                          <Label className="text-sm font-semibold">Select Status</Label>
+                        <div className="space-y-2">
+                          <Label className="text-base font-semibold">
+                            Status
+                          </Label>
                           <div className="grid grid-cols-2 gap-2">
-                            {[
-                              { value: "available", label: "Available", color: "#10b981" },
-                              { value: "occupied", label: "Occupied", color: "#f59e0b" },
-                              { value: "reserved", label: "Reserved", color: "#3b82f6" },
-                              { value: "maintenance", label: "Maintenance", color: "#ef4444" },
-                            ].map((status) => (
-                              <button
-                                key={status.value}
-                                onClick={() => {
-                                  if (status.value !== "reserved") {
-                                    handleStatusChange(table.id, status.value)
+                            {['available', 'occupied', 'reserved', 'maintenance'].map(
+                              (status) => (
+                                <Button
+                                  key={status}
+                                  variant={
+                                    status === 'reserved' ? 'default' : 'outline'
                                   }
-                                }}
-                                className={`p-3 rounded-lg border-2 transition-all text-sm font-medium flex items-center gap-2 justify-center ${
-                                  table.status === status.value
-                                    ? "border-primary bg-primary/10"
-                                    : "border-border hover:border-primary/50"
-                                }`}
-                              >
-                                <div
-                                  className="h-2.5 w-2.5 rounded-full"
-                                  style={{ backgroundColor: status.color }}
-                                />
-                                {status.label}
-                              </button>
-                            ))}
+                                  onClick={() => {
+                                    if (status !== 'reserved') {
+                                      handleStatusChange(table.id, status)
+                                    }
+                                  }}
+                                  className="h-10 text-xs md:text-sm"
+                                >
+                                  <div
+                                    className="h-2 w-2 rounded-full mr-1.5 flex-shrink-0"
+                                    style={{
+                                      backgroundColor:
+                                        status === 'available'
+                                          ? '#10b981'
+                                          : status === 'occupied'
+                                            ? '#f59e0b'
+                                            : status === 'reserved'
+                                              ? '#3b82f6'
+                                              : '#ef4444',
+                                    }}
+                                  />
+                                  {status.charAt(0).toUpperCase() +
+                                    status.slice(1)}
+                                </Button>
+                              )
+                            )}
                           </div>
                         </div>
 
-                        {/* Time Selection for Reserved */}
+                        {/* Time Selection */}
                         <div className="border-t pt-4 space-y-3">
-                          <Label className="text-sm font-semibold flex items-center gap-2">
+                          <Label className="text-base font-semibold flex items-center gap-2">
                             <Clock className="h-4 w-4" />
                             Reservation Time
                           </Label>
                           <div className="space-y-2">
                             <div>
-                              <Label className="text-xs text-muted-foreground">From</Label>
+                              <Label className="text-xs md:text-sm">From</Label>
                               <Input
                                 type="datetime-local"
                                 value={reservedFrom}
-                                onChange={(e) => setReservedFrom(e.target.value)}
-                                className="mt-1 text-sm"
+                                onChange={(e) =>
+                                  setReservedFrom(e.target.value)
+                                }
+                                className="mt-1"
                               />
                             </div>
                             <div>
-                              <Label className="text-xs text-muted-foreground">To</Label>
+                              <Label className="text-xs md:text-sm">To</Label>
                               <Input
                                 type="datetime-local"
                                 value={reservedTo}
-                                onChange={(e) => setReservedTo(e.target.value)}
-                                className="mt-1 text-sm"
+                                onChange={(e) =>
+                                  setReservedTo(e.target.value)
+                                }
+                                className="mt-1"
                               />
                             </div>
                           </div>
                         </div>
 
-                        {/* Action Buttons */}
+                        {/* Buttons */}
                         <div className="flex gap-2 pt-4 border-t">
                           <Button
                             variant="outline"
                             onClick={() => {
                               setEditingTableId(null)
-                              setReservedFrom("")
-                              setReservedTo("")
+                              setReservedFrom('')
+                              setReservedTo('')
                             }}
-                            className="flex-1 text-sm"
+                            className="flex-1"
                           >
                             Cancel
                           </Button>
                           <Button
-                            onClick={() => handleStatusChange(table.id, "reserved")}
-                            className="flex-1 text-sm"
+                            onClick={() =>
+                              handleStatusChange(table.id, 'reserved')
+                            }
+                            className="flex-1"
                           >
-                            Reserve
+                            Save
                           </Button>
                         </div>
                       </div>
@@ -196,87 +269,104 @@ export default function TablesPage() {
 
                 {/* Table Card */}
                 <Card
-                  className={`p-4 md:p-5 text-center transition-all duration-300 relative group border-2 h-full flex flex-col justify-between ${
-                    isAvailable
-                      ? "border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 hover:shadow-lg hover:border-emerald-400 dark:hover:border-emerald-600"
-                      : isOccupied
-                        ? "border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 opacity-75 cursor-not-allowed"
-                        : isReserved
-                          ? "border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/30 opacity-75 cursor-not-allowed"
-                          : "border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950/30 opacity-75 cursor-not-allowed"
+                  className={`p-4 md:p-5 text-center h-full flex flex-col justify-between cursor-pointer transition-all duration-300 border-2 group ${
+                    table.status === 'available'
+                      ? 'bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/40 dark:to-emerald-900/20 border-emerald-300 dark:border-emerald-700 hover:shadow-xl hover:border-emerald-400 dark:hover:border-emerald-600'
+                      : table.status === 'occupied'
+                        ? 'bg-gradient-to-br from-amber-50 to-amber-100/50 dark:from-amber-950/40 dark:to-amber-900/20 border-amber-300 dark:border-amber-700 opacity-75'
+                        : table.status === 'reserved'
+                          ? 'bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/40 dark:to-blue-900/20 border-blue-300 dark:border-blue-700 opacity-75'
+                          : 'bg-gradient-to-br from-red-50 to-red-100/50 dark:from-red-950/40 dark:to-red-900/20 border-red-300 dark:border-red-700 opacity-75'
                   }`}
                 >
-                  {/* Content */}
-                  <div>
-                    {/* Table Number */}
-                    <div className="text-4xl md:text-5xl font-black text-foreground">{table.table_number}</div>
+                  {/* Table Number */}
+                  <div className="space-y-2">
+                    <div className="text-4xl md:text-5xl font-black">
+                      {table.table_number}
+                    </div>
 
                     {/* Capacity */}
-                    <div className="flex items-center justify-center gap-1 text-xs md:text-sm text-muted-foreground mt-2">
-                      <Users className="h-3.5 w-3.5" />
-                      <span className="font-medium">{table.capacity} Seats</span>
+                    <div className="flex items-center justify-center gap-1.5 text-xs md:text-sm text-muted-foreground">
+                      <Users className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                      <span className="font-medium">{table.capacity}</span>
                     </div>
 
                     {/* Status Badge */}
                     <Badge
-                      className={`mt-3 w-full justify-center py-1 text-xs font-bold ${
-                        isAvailable
-                          ? "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300"
-                          : isOccupied
-                            ? "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300"
-                            : isReserved
-                              ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
-                              : "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300"
+                      className={`w-full justify-center py-1 text-xs font-bold ${
+                        table.status === 'available'
+                          ? 'bg-emerald-200 dark:bg-emerald-800/60 text-emerald-700 dark:text-emerald-300'
+                          : table.status === 'occupied'
+                            ? 'bg-amber-200 dark:bg-amber-800/60 text-amber-700 dark:text-amber-300'
+                            : table.status === 'reserved'
+                              ? 'bg-blue-200 dark:bg-blue-800/60 text-blue-700 dark:text-blue-300'
+                              : 'bg-red-200 dark:bg-red-800/60 text-red-700 dark:text-red-300'
                       }`}
                     >
-                      {isAvailable
-                        ? "Available"
-                        : isOccupied
-                          ? "Occupied"
-                          : isReserved
-                            ? "Reserved"
-                            : "Maintenance"}
+                      {table.status === 'available'
+                        ? 'Available'
+                        : table.status === 'occupied'
+                          ? 'Occupied'
+                          : table.status === 'reserved'
+                            ? 'Reserved'
+                            : 'Maintenance'}
                     </Badge>
 
                     {/* Reservation Time */}
-                    {isReserved && table.reserved_from && table.reserved_to && (
-                      <p className="text-xs mt-2 text-muted-foreground font-medium">
-                        {formatReservationTime(table.reserved_from, table.reserved_to)}
-                      </p>
-                    )}
+                    {table.status === 'reserved' &&
+                      table.reserved_from &&
+                      table.reserved_to && (
+                        <p className="text-xs md:text-xs text-muted-foreground font-medium mt-2">
+                          {formatReservationTime(
+                            table.reserved_from,
+                            table.reserved_to
+                          )}
+                        </p>
+                      )}
                   </div>
 
-                  {/* Select Button - Only for Available */}
-                  {isAvailable && (
+                  {/* Select Button */}
+                  {table.status === 'available' && (
                     <Button
                       size="sm"
-                      className="w-full mt-4 text-xs md:text-sm font-semibold"
+                      className="w-full mt-3 gap-1.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold text-xs md:text-sm h-9"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleSelectTable(table.id)
                       }}
                     >
-                      Select
+                      Select <ChevronRight className="h-3.5 w-3.5" />
                     </Button>
                   )}
 
-                  {/* Edit Status Button - Corner Icon */}
-                  <button
+                  {/* Edit Status Button */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                     onClick={(e) => {
                       e.stopPropagation()
                       setEditingTableId(table.id)
                     }}
-                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/5 hover:bg-black/10 dark:bg-white/5 dark:hover:bg-white/10 transition-all opacity-0 group-hover:opacity-100"
                     title="Change status"
                   >
-                    <Edit2 className="h-4 w-4 md:h-5 md:w-5 text-foreground/70" />
-                  </button>
+                    <Settings className="h-4 w-4" />
+                  </Button>
                 </Card>
               </div>
-            )
-          })}
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        isAdmin={isAdmin}
+        theme={theme}
+        onThemeChange={toggleTheme}
+      />
     </div>
   )
 }
