@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Settings, ShoppingCart, Moon, Sun } from "lucide-react"
+import { Search, Settings, ShoppingCart, Moon, Sun, TableProperties } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import ProductGrid from "../components/product-grid"
 import CartSidebar from "../components/cart-sidebar"
@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { useCart } from "../context/cart-context"
+import { useTable } from "../context/table-context"
 import { useTheme } from "../components/theme-provider"
 
 const CATEGORIES = [
@@ -25,6 +26,7 @@ export default function POSPage() {
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [showCart, setShowCart] = useState(false)
   const { cart, itemCount } = useCart()
+  const { selectedTable } = useTable()
   const cartCount = itemCount
   const { theme, toggleTheme } = useTheme()
 
@@ -100,8 +102,36 @@ export default function POSPage() {
                 />
               </div>
 
+              {/* Center: Table Number Display */}
+              {selectedTable && (
+                <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg">
+                  <TableProperties className="h-4 w-4 text-primary" />
+                  <span className="font-bold text-lg text-primary">Table {selectedTable.table_number}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs"
+                    onClick={() => router.push("/tables")}
+                  >
+                    Change
+                  </Button>
+                </div>
+              )}
+
               {/* Right: Cart + Theme + Settings */}
               <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+                {/* Mobile: Table Selector */}
+                {selectedTable && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="md:hidden h-8 w-8"
+                    onClick={() => router.push("/tables")}
+                    title={`Table ${selectedTable.table_number}`}
+                  >
+                    <TableProperties className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button 
                   variant="ghost"
                   size="icon"

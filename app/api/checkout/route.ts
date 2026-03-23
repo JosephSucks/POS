@@ -49,9 +49,10 @@ export async function POST(request: Request) {
     const initialStatus = transaction.paymentMethod === 'cash' ? 'completed' : 'pending'
     
     const orderResult = await sql`
-      INSERT INTO orders (customer_id, subtotal, discount, tax, total, payment_method, status)
+      INSERT INTO orders (customer_id, table_id, subtotal, discount, tax, total, payment_method, status)
       VALUES (
         ${transaction.customerId || null},
+        ${transaction.tableId || null},
         ${transaction.subtotal},
         ${transaction.discount},
         ${transaction.tax},

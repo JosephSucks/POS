@@ -34,6 +34,7 @@ export interface Customer {
 export interface Transaction {
   id?: number
   customerId?: number
+  tableId?: number
   items: Array<{
     id: number
     name: string

@@ -20,7 +20,7 @@ export default function LoginPage() {
     // Check if already logged in
     const isLoggedIn = localStorage.getItem('pos-logged-in')
     if (isLoggedIn === 'true') {
-      router.push('/pos')
+      router.push('/tables')
     }
   }, [router])
 
@@ -48,8 +48,8 @@ export default function LoginPage() {
       // Also set cookie for middleware to check
       document.cookie = 'pos-logged-in=true; path=/'
 
-      // Redirect to POS
-      router.push('/pos')
+      // Redirect to Tables for table selection
+      router.push('/tables')
     } catch (err) {
       console.error('[v0] Login error:', err)
       setError("Login failed. Please try again.")
