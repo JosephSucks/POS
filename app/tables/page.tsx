@@ -166,39 +166,39 @@ export default function TablesPage() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8 space-y-6 md:space-y-8">
-        {/* Stats Cards - Simple, clean design without overflow */}
+        {/* Stats Cards - Consistent styling */}
         <div className="grid grid-cols-3 gap-3 md:gap-4">
           <Card
-            className={`rounded-lg md:rounded-xl p-4 md:p-6 border-2 border-emerald-500 overflow-hidden ${
+            className={`rounded-lg md:rounded-xl p-5 md:p-6 border-2 border-emerald-500 overflow-hidden ${
               isDark ? 'bg-slate-900' : 'bg-white'
             }`}
           >
-            <p className={`text-xs md:text-sm font-medium mb-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-xs md:text-sm font-medium mb-3 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Available
             </p>
-            <p className="text-3xl md:text-4xl font-bold text-emerald-500">{availableCount}</p>
+            <p className="text-4xl md:text-5xl font-bold text-emerald-500 leading-none">{availableCount}</p>
           </Card>
 
           <Card
-            className={`rounded-lg md:rounded-xl p-4 md:p-6 border-2 border-amber-600 overflow-hidden ${
+            className={`rounded-lg md:rounded-xl p-5 md:p-6 border-2 border-amber-600 overflow-hidden ${
               isDark ? 'bg-slate-900' : 'bg-white'
             }`}
           >
-            <p className={`text-xs md:text-sm font-medium mb-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-xs md:text-sm font-medium mb-3 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Occupied
             </p>
-            <p className="text-3xl md:text-4xl font-bold text-amber-500">{occupiedCount}</p>
+            <p className="text-4xl md:text-5xl font-bold text-amber-500 leading-none">{occupiedCount}</p>
           </Card>
 
           <Card
-            className={`rounded-lg md:rounded-xl p-4 md:p-6 border-2 border-blue-500 overflow-hidden ${
+            className={`rounded-lg md:rounded-xl p-5 md:p-6 border-2 border-blue-500 overflow-hidden ${
               isDark ? 'bg-slate-900' : 'bg-white'
             }`}
           >
-            <p className={`text-xs md:text-sm font-medium mb-2 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <p className={`text-xs md:text-sm font-medium mb-3 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Reserved
             </p>
-            <p className="text-3xl md:text-4xl font-bold text-blue-500">{reservedCount}</p>
+            <p className="text-4xl md:text-5xl font-bold text-blue-500 leading-none">{reservedCount}</p>
           </Card>
         </div>
 
@@ -337,7 +337,7 @@ export default function TablesPage() {
                         </div>
 
                         {/* Status Badge */}
-                        <Badge className={`${getStatusBadgeColor(table.status)} text-xs md:text-sm font-bold w-fit py-1.5 px-3`}>
+                        <Badge className={`${getStatusBadgeColor(table.status)} text-xs md:text-sm font-bold px-4 py-2 rounded-full`}>
                           {table.status === 'available'
                             ? 'Available'
                             : table.status === 'occupied'
