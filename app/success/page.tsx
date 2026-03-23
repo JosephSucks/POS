@@ -7,6 +7,7 @@ import { Check, Printer, CreditCard, Banknote, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
+import { useTheme } from "@/components/theme-provider"
 
 interface OrderItem {
   name: string

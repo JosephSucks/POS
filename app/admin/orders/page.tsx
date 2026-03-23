@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { db, type Transaction } from "../../services/database"
+import { useTheme } from "@/components/theme-provider"
 
 interface OrderDetails extends Transaction {
   customerName?: string

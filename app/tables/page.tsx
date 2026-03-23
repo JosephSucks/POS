@@ -6,9 +6,9 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Users, Edit2, Moon, Sun, Settings } from 'lucide-react'
+import { useTheme } from '@/components/theme-provider'
 
 interface Table {
   id: string
@@ -21,17 +21,13 @@ interface Table {
 
 export default function TablesPage() {
   const router = useRouter()
+  const { theme, toggleTheme } = useTheme()
   const [tables, setTables] = useState<Table[]>([])
   const [loading, setLoading] = useState(true)
   const [editingTableId, setEditingTableId] = useState<string | null>(null)
   const [editStatus, setEditStatus] = useState('')
-  const [theme, setTheme] = useState('light')
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('pos-theme') || 'light'
-    setTheme(savedTheme)
-    document.documentElement.classList.toggle('dark', savedTheme === 'dark')
-
     fetchTables()
   }, [])
 
@@ -68,13 +64,6 @@ export default function TablesPage() {
     }
   }
 
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light'
-    setTheme(newTheme)
-    localStorage.setItem('pos-theme', newTheme)
-    document.documentElement.classList.toggle('dark', newTheme === 'dark')
-  }
-
   const getStatusBadgeColor = (status: string) => {
     const isDark = theme === 'dark'
     switch (status) {
@@ -87,7 +76,7 @@ export default function TablesPage() {
       case 'maintenance':
         return isDark ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-red-100 text-red-700 border border-red-300'
       default:
-        return isDark ? 'bg-gray-500/20 text-gray-400' : 'bg-gray-100 text-gray-700'
+        return isDark ? 'bg-gray-500/20 text-gray-400 border border-gray-500/40' : 'bg-gray-100 text-gray-700 border border-gray-300'
     }
   }
 

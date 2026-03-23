@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useCart } from "../context/cart-context"
 import { useTable } from "../context/table-context"
+import { useTheme } from "@/components/theme-provider"
 
 export default function CheckoutPage() {
   const router = useRouter()
