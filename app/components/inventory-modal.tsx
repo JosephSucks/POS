@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { IMAGE_PLACEHOLDER } from "@/lib/image-placeholder"
 
 interface InventoryItem {
   id: number
@@ -124,9 +125,13 @@ export default function InventoryModal({ isOpen, onClose }: InventoryModalProps)
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-md overflow-hidden">
                           <img
-                            src={item.image || "/placeholder.svg"}
+                            src={item.image || IMAGE_PLACEHOLDER}
                             alt={item.name}
                             className="h-full w-full object-cover"
+                            onError={(event) => {
+                              event.currentTarget.onerror = null
+                              event.currentTarget.src = IMAGE_PLACEHOLDER
+                            }}
                           />
                         </div>
                         <div>

@@ -5,6 +5,7 @@ import { Minus, Plus, ShoppingCart, Trash2, User, Tag, LogOut, X } from "lucide-
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { IMAGE_PLACEHOLDER } from "@/lib/image-placeholder"
 import { useCart } from "../context/cart-context"
 import CustomerModal from "./customer-modal"
 import DiscountModal from "./discount-modal"
@@ -75,7 +76,15 @@ export default function CartSidebar() {
             {cart.map((item) => (
               <div key={item.id} className="flex gap-3">
                 <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border">
-                  <img src={item.image || "/placeholder.svg"} alt={item.name} className="h-full w-full object-cover" />
+                  <img
+                    src={item.image || IMAGE_PLACEHOLDER}
+                    alt={item.name}
+                    className="h-full w-full object-cover"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null
+                      event.currentTarget.src = IMAGE_PLACEHOLDER
+                    }}
+                  />
                 </div>
                 <div className="flex flex-1 flex-col">
                   <div className="flex justify-between">
