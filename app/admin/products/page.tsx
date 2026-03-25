@@ -78,7 +78,7 @@ export default function ProductsPage() {
       }))
       setProducts(inventory)
     } catch (error) {
-      console.error('[v0] Error loading products:', error)
+      console.error('Error loading products:', error)
     }
   }
 
@@ -143,7 +143,7 @@ export default function ProductsPage() {
       }
 
       const result = await response.json()
-      console.log('[v0] Product saved:', result)
+      console.log('Product saved:', result)
       
       // Refresh products list
       await loadProducts()
@@ -153,7 +153,7 @@ export default function ProductsPage() {
         description: editingProduct ? 'Product updated successfully!' : 'Product created successfully!',
       })
     } catch (error) {
-      console.error('[v0] Error submitting product:', error)
+      console.error('Error submitting product:', error)
       toast({
         title: "Error",
         description: 'Error saving product',
@@ -191,7 +191,7 @@ export default function ProductsPage() {
           description: 'Product deleted successfully!',
         })
       } catch (error) {
-        console.error('[v0] Error deleting product:', error)
+        console.error('Error deleting product:', error)
         toast({
           title: "Error",
           description: 'Error deleting product',

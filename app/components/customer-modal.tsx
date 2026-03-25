@@ -60,7 +60,7 @@ export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
       }))
       setCustomers(mappedCustomers)
     } catch (error) {
-      console.error('[v0] Error loading customers:', error)
+      console.error('Error loading customers:', error)
     }
   }
 
@@ -80,7 +80,7 @@ export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
         }))
         setCustomers(mappedResults)
       } catch (error) {
-        console.error('[v0] Error searching customers:', error)
+        console.error('Error searching customers:', error)
       }
     } else {
       loadCustomers()
@@ -102,10 +102,10 @@ export default function CustomerModal({ isOpen, onClose }: CustomerModalProps) {
         setShowAddForm(false)
         loadCustomers()
       } else {
-        console.error('[v0] Error adding customer:', response.statusText)
+        console.error('Error adding customer:', response.statusText)
       }
     } catch (error) {
-      console.error('[v0] Error adding customer:', error)
+      console.error('Error adding customer:', error)
     }
   }
 

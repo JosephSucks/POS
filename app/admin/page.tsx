@@ -57,18 +57,18 @@ export default function AdminDashboard() {
     setLoading(true)
     setError(null)
     try {
-      console.log('[v0] Fetching TODAY dashboard data')
+      console.log('Fetching.. TODAY dashboard data')
       const response = await fetch('/api/admin/dashboard')
       
-      console.log('[v0] Dashboard response status:', response.status)
+      console.log('Dashboard response status:', response.status)
       
       if (!response.ok) {
-        console.error('[v0] Dashboard API returned status:', response.status)
+        console.error('Dashboard API returned status:', response.status)
         throw new Error(`API returned status ${response.status}`)
       }
 
       const data = await response.json()
-      console.log('[v0] Dashboard data received:', data)
+      console.log('Dashboard data received:', data)
       
       if (!data) {
         throw new Error('No data returned from API')
@@ -77,7 +77,7 @@ export default function AdminDashboard() {
       setStats(data)
       setError(null)
     } catch (err) {
-      console.error("[v0] Failed to load dashboard data:", err)
+      console.error("Failed to load dashboard data:", err)
       const errorMsg = err instanceof Error ? err.message : 'Failed to load dashboard'
       setError(errorMsg)
       setStats({

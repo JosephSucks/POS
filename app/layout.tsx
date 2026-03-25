@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "POS System",
   description: "Point of Sale System",
-    generator: 'v0.app'
+    generator: 'v1.POS'
 }
 
 export default function RootLayout({

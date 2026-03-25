@@ -47,7 +47,7 @@ export default function InventoryModal({ isOpen, onClose }: InventoryModalProps)
       const items = await response.json()
       setInventory(items)
     } catch (error) {
-      console.error('[v0] Error loading inventory:', error)
+      console.error('Error loading inventory:', error)
     }
   }
 
@@ -57,7 +57,7 @@ export default function InventoryModal({ isOpen, onClose }: InventoryModalProps)
       const items = await response.json()
       setLowStockItems(items)
     } catch (error) {
-      console.error('[v0] Error loading low stock items:', error)
+      console.error('Error loading low stock items:', error)
     }
   }
 
@@ -74,7 +74,7 @@ export default function InventoryModal({ isOpen, onClose }: InventoryModalProps)
         loadLowStockItems()
       }
     } catch (error) {
-      console.error('[v0] Error updating stock:', error)
+      console.error('Error updating stock:', error)
     }
   }
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-import { getAuthTokenFromRequest, verifyAuthToken } from "@/lib/auth"
+import { getAuthTokenFromRequest, verifyAuthToken, canAccessAdmin } from "@/lib/auth"
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
@@ -16,10 +16,13 @@ export async function middleware(request: NextRequest) {
   try {
     const user = await verifyAuthToken(token)
 
-    if (pathname.startsWith("/admin") && user.role !== "admin") {
-      const posUrl = new URL("/pos", request.url)
-      posUrl.searchParams.set("reason", "forbidden")
-      return NextResponse.redirect(posUrl)
+    if (pathname.startsWith("/admin")) {
+      const hasAccess = await canAccessAdmin(user)
+      if (!hasAccess) {
+        const posUrl = new URL("/pos", request.url)
+        posUrl.searchParams.set("reason", "forbidden")
+        return NextResponse.redirect(posUrl)
+      }
     }
 
     return NextResponse.next()
@@ -33,3 +36,4 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ["/pos/:path*", "/admin/:path*"],
 }
+

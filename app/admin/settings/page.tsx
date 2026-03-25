@@ -19,7 +19,8 @@ import {
   Shield,
   Lock,
   Eye,
-  EyeOff
+  EyeOff,
+  AlertCircle
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -70,8 +71,9 @@ interface Settings {
   sessionTimeout: number
   
   // Security
-  adminPinEnabled: boolean
-  adminPin: string
+  adminPinEnabled?: boolean // Deprecated but kept for backward compatibility
+  adminPin?: string // Deprecated but kept for backward compatibility
+  managerAccessControl: string // "ON" or "OFF"
 }
 
 const defaultSettings: Settings = {
@@ -103,8 +105,7 @@ const defaultSettings: Settings = {
   defaultPaymentMethod: "cash",
   sessionTimeout: 30,
   
-  adminPinEnabled: true,
-  adminPin: "1234",
+  managerAccessControl: "ON",
 }
 
 export default function SettingsPage() {
@@ -124,7 +125,7 @@ export default function SettingsPage() {
         const dbSettings = await response.json()
         setSettings(prev => ({ ...prev, ...dbSettings }))
       } catch (error) {
-        console.error('[v0] Failed to load settings:', error)
+        console.error('Failed to load settings:', error)
         // Fall back to localStorage for backwards compatibility
         const savedSettings = localStorage.getItem('pos-settings')
         if (savedSettings) {
@@ -173,7 +174,7 @@ export default function SettingsPage() {
       // Show success feedback
       setTimeout(() => setSaving(false), 500)
     } catch (error) {
-      console.error('[v0] Failed to save settings:', error)
+      console.error('Failed to save settings:', error)
       toast({
         title: "Error",
         description: "Failed to save settings. Please try again.",
@@ -646,82 +647,70 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5" />
-                Admin PIN Lock
+                <Shield className="h-5 w-5" />
+                Manager Access Control
               </CardTitle>
-              <CardDescription>Require a PIN to access the admin panel</CardDescription>
+              <CardDescription>Control whether managers need to request access to the admin panel</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-                    <Shield className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+                    <Lock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <Label>Enable Admin PIN</Label>
+                    <Label>Require Manager Approval</Label>
                     <p className="text-sm text-muted-foreground">
-                      Require PIN entry to access admin dashboard
+                      When enabled, managers must request 1-hour access from admins
                     </p>
                   </div>
                 </div>
                 <Switch
-                  checked={settings.adminPinEnabled}
-                  onCheckedChange={(checked) => updateSetting('adminPinEnabled', checked)}
+                  checked={settings.managerAccessControl === "ON"}
+                  onCheckedChange={(checked) => updateSetting('managerAccessControl', checked ? "ON" : "OFF")}
                 />
               </div>
-              
-              {settings.adminPinEnabled && (
-                <>
-                  <Separator />
+
+              <Separator />
+
+              <div className="space-y-2">
+                <p className="font-medium text-sm">Current Setting</p>
+                {settings.managerAccessControl === "ON" ? (
                   <div className="space-y-2">
-                    <Label htmlFor="adminPin">Admin PIN (4-6 digits)</Label>
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <Input
-                          id="adminPin"
-                          type={showPin ? "text" : "password"}
-                          value={settings.adminPin}
-                          onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, '').slice(0, 6)
-                            updateSetting('adminPin', value)
-                          }}
-                          placeholder="Enter PIN"
-                          maxLength={6}
-                          className="pr-10"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowPin(!showPin)}
-                        >
-                          {showPin ? (
-                            <EyeOff className="h-4 w-4 text-muted-foreground" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
+                    <p className="text-sm text-green-600 dark:text-green-400 font-medium">
+                      ✓ Manager access control is ENABLED
+                    </p>
                     <p className="text-xs text-muted-foreground">
-                      Staff will need to enter this PIN to access admin pages. Default: 1234
+                      Managers cannot access the admin panel directly. They must submit a request that you can approve or deny. If approved, they get 1-hour temporary access.
+                    </p>
+                    <p className="text-xs text-muted-foreground font-medium">
+                      → Go to <Button variant="link" size="sm" asChild className="h-auto p-0 text-xs">
+                        <a href="/admin/access-requests">Access Requests</a>
+                      </Button> to manage pending requests
                     </p>
                   </div>
-                </>
-              )}
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                      ⚠ Manager access control is DISABLED
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Managers can access the admin panel directly without requesting permission. This reduces security but increases convenience.
+                    </p>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
+          <Card className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
-                <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                 <div>
-                  <p className="font-medium text-amber-800 dark:text-amber-300">Security Note</p>
-                  <p className="text-sm text-amber-700 dark:text-amber-400">
-                    The admin PIN provides basic protection against accidental access. For sensitive data,
-                    consider implementing proper authentication.
+                  <p className="font-medium text-blue-800 dark:text-blue-300">Access Control Note</p>
+                  <p className="text-sm text-blue-700 dark:text-blue-400">
+                    Enabling this setting requires managers to request admin access, which you must approve. Disabling it allows managers direct access to the admin panel.
                   </p>
                 </div>
               </div>

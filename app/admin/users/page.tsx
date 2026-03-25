@@ -63,9 +63,9 @@ const getErrorMessage = async (response: Response) => {
 }
 
 const roleBadgeClassName: Record<UserRole, string> = {
-  admin: "bg-primary/10 text-primary border-primary/20",
+  admin: "bg-purple-500/10 text-purple-700 border-purple-500/20 dark:text-purple-300",
   manager: "bg-blue-500/10 text-blue-700 border-blue-500/20 dark:text-blue-300",
-  cashier: "bg-muted text-muted-foreground border-border",
+  cashier: "bg-gray-500/10 text-gray-700 border-gray-500/20 dark:text-gray-300",
 }
 
 const statusBadgeClassName: Record<UserStatus, string> = {

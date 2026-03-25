@@ -61,7 +61,7 @@ export default function CustomersPage() {
       const data = await response.json()
       setCustomers(Array.isArray(data) ? data : [])
     } catch (error) {
-      console.error('[v0] Error loading customers:', error)
+      console.error('Error loading customers:', error)
     } finally {
       setLoading(false)
     }
@@ -92,7 +92,7 @@ export default function CustomersPage() {
       await loadCustomers()
       resetForm()
     } catch (error) {
-      console.error('[v0] Error saving customer:', error)
+      console.error('Error saving customer:', error)
       alert('Failed to save customer')
     }
   }
@@ -118,7 +118,7 @@ export default function CustomersPage() {
       if (!response.ok) throw new Error('Failed to delete customer')
       await loadCustomers()
     } catch (error) {
-      console.error('[v0] Error deleting customer:', error)
+      console.error('Error deleting customer:', error)
       alert('Failed to delete customer')
     }
   }

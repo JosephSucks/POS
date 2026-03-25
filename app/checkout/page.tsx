@@ -16,20 +16,20 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("cash")
   const [isHydrated, setIsHydrated] = useState(false)
   
-  console.log('[v0] Checkout page render - cart length:', cart.length, 'customer:', customer?.name)
+  console.log('Checkout page render - cart length:', cart.length, 'customer:', customer?.name)
   
   // Wait for cart to be populated before rendering checkout
   useEffect(() => {
     // If cart is already populated, show immediately
     if (cart.length > 0) {
-      console.log('[v0] Cart already populated, showing checkout')
+      console.log('Cart already populated, showing checkout')
       setIsHydrated(true)
       return
     }
     
     // Otherwise wait up to 500ms for cart to load
     const timer = setTimeout(() => {
-      console.log('[v0] Hydration timeout - cart length:', cart.length)
+      console.log('Hydration timeout - cart length:', cart.length)
       setIsHydrated(true)
     }, 500)
     
@@ -41,7 +41,7 @@ export default function CheckoutPage() {
 
   const handlePayment = async () => {
     try {
-      console.log('[v0] Starting checkout with cart:', cart.length, 'items, customer:', customer?.name, 'discount:', discountAmount)
+      console.log('Starting checkout with cart:', cart.length, 'items, customer:', customer?.name, 'discount:', discountAmount)
 
       const transaction = {
         customerId: customer?.id || null,
@@ -59,7 +59,7 @@ export default function CheckoutPage() {
         paymentMethod: paymentMethod,
       }
 
-      console.log('[v0] Sending transaction to API:', transaction)
+      console.log('Sending transaction to API:', transaction)
 
       // Save transaction via API
       const response = await fetch('/api/checkout', {
@@ -74,7 +74,7 @@ export default function CheckoutPage() {
       }
 
       const result = await response.json()
-      console.log('[v0] Payment successful, order ID:', result.orderId)
+      console.log('Payment successful, order ID:', result.orderId)
       
       // Build success URL with order info - BEFORE clearing cart
       const successParams = new URLSearchParams({
@@ -93,7 +93,7 @@ export default function CheckoutPage() {
       })
       
       const successUrl = `/success?${successParams.toString()}`
-      console.log('[v0] Redirecting to success page:', successUrl)
+      console.log('Redirecting to success page:', successUrl)
       
       // Clear cart first
       clearCart()
@@ -101,7 +101,7 @@ export default function CheckoutPage() {
       // Then redirect immediately using router.push (faster than window.location)
       router.push(successUrl)
     } catch (error) {
-      console.error('[v0] Checkout error:', error)
+      console.error('Checkout error:', error)
       alert('Failed to process payment. Please try again.')
     }
   }

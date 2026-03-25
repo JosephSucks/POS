@@ -1,3 +1,5 @@
+require("dotenv").config()
+
 const { neon } = require("@neondatabase/serverless")
 const bcrypt = require("bcryptjs")
 

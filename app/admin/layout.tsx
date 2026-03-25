@@ -16,6 +16,7 @@ import {
   Store,
   Users,
   X,
+  Clock,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -29,6 +30,7 @@ const navigation = [
   { name: "Categories", href: "/admin/categories", icon: Package },
   { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
   { name: "Customers", href: "/admin/customers", icon: Users },
+  { name: "Access Requests", href: "/admin/access-requests", icon: Clock },
   { name: "Organizations", href: "/admin/organizations", icon: Building2 },
   { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { name: "Settings", href: "/admin/settings", icon: Settings },

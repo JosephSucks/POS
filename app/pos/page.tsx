@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { AlertCircle, Moon, Search, Settings, ShoppingCart, Sun } from "lucide-react"
+import { AlertCircle, LogOut, Moon, Search, ShoppingCart, Sun } from "lucide-react"
 
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -10,10 +10,25 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import ProductGrid from "../components/product-grid"
 import CartSidebar from "../components/cart-sidebar"
 import { useCart } from "../context/cart-context"
 import { useTheme } from "../components/theme-provider"
+import { AdminAccessRequestButton } from "@/components/admin-access-request-button"
+import type { AuthUser } from "@/lib/auth"
+
+interface AuthResponse {
+  user: AuthUser
+  temporaryAdminAccess?: boolean
+  managerAccessControlEnabled?: boolean
+}
 
 const CATEGORIES = [
   { id: "all", name: "All Products", icon: "🏪" },
@@ -26,7 +41,11 @@ export default function POSPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [showCart, setShowCart] = useState(false)
-  const [canAccessAdmin, setCanAccessAdmin] = useState(false)
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [managerAccessControlEnabled, setManagerAccessControlEnabled] = useState(false)
+  const [temporaryAdminAccess, setTemporaryAdminAccess] = useState(false)
+  const [accessRequestStatus, setAccessRequestStatus] = useState<"pending" | "approved" | "denied" | null>(null)
   const { itemCount } = useCart()
   const { theme, toggleTheme } = useTheme()
   const router = useRouter()
@@ -36,15 +55,48 @@ export default function POSPage() {
     const loadCurrentUser = async () => {
       try {
         const response = await fetch("/api/auth/me", { credentials: "include" })
-        const data = await response.json().catch(() => null)
-        setCanAccessAdmin(data?.user?.role === "admin")
+        const data: AuthResponse | null = await response.json().catch(() => null)
+        if (data?.user) {
+          setCurrentUser(data.user)
+          setManagerAccessControlEnabled(data.managerAccessControlEnabled || false)
+          setTemporaryAdminAccess(data.temporaryAdminAccess || false)
+        }
       } catch (error) {
         console.error("[auth] Failed to load current user:", error)
       }
     }
 
     loadCurrentUser()
+    // Refresh access status every 30 seconds for managers
+    const interval = setInterval(loadCurrentUser, 30000)
+    return () => clearInterval(interval)
   }, [])
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      })
+      router.push("/")
+      window.location.reload()
+    } catch (error) {
+      console.error("[auth] Logout failed:", error)
+      setIsLoggingOut(false)
+    }
+  }
+
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case "admin":
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100"
+      case "manager":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100"
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100"
+    }
+  }
 
   const handleThemeToggle = async () => {
     const newDarkMode = theme === "light"
@@ -147,17 +199,87 @@ export default function POSPage() {
                 >
                   {theme === "light" ? <Moon className="h-4 w-4 md:h-5 md:w-5" /> : <Sun className="h-4 w-4 md:h-5 md:w-5" />}
                 </Button>
-                {canAccessAdmin && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 md:h-9 md:w-9"
-                    onClick={() => router.push("/admin")}
-                    title="Admin"
-                  >
-                    <Settings className="h-4 w-4 md:h-5 md:w-5" />
-                  </Button>
+
+                {currentUser && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="gap-2 h-8 md:h-9">
+                        <div className="flex items-center gap-2">
+                          <div className="flex flex-col items-start text-left max-w-[150px] hidden sm:block">
+                            <span className="text-xs font-medium truncate">{currentUser.name}</span>
+                            <Badge variant="secondary" className={`text-xs ${getRoleBadgeColor(currentUser.role)} ml-1`}>
+                              {currentUser.role}
+                            </Badge>
+                          </div>
+                          <div className="h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold sm:hidden">
+                            {currentUser.name.charAt(0).toUpperCase()}
+                          </div>
+                        </div>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <div className="px-2 py-1.5 text-sm">
+                        <p className="font-medium">{currentUser.name}</p>
+                        <p className="text-xs text-muted-foreground">{currentUser.email}</p>
+                      </div>
+                      <DropdownMenuSeparator />
+                      {currentUser.role === "admin" && (
+                        <>
+                          <DropdownMenuItem asChild>
+                            <button onClick={() => router.push("/admin")} className="w-full cursor-pointer">
+                              Admin Panel
+                            </button>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
+                      {currentUser.role === "manager" && (
+                        <>
+                          {managerAccessControlEnabled ? (
+                            <>
+                              <DropdownMenuItem asChild>
+                                <div className="w-full">
+                                  <AdminAccessRequestButton
+                                    controlEnabled={managerAccessControlEnabled}
+                                    currentStatus={accessRequestStatus}
+                                  />
+                                </div>
+                              </DropdownMenuItem>
+                              {temporaryAdminAccess && (
+                                <DropdownMenuItem asChild>
+                                  <button onClick={() => router.push("/admin")} className="w-full cursor-pointer text-green-600 dark:text-green-400">
+                                    Admin Panel (Temporary)
+                                  </button>
+                                </DropdownMenuItem>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <DropdownMenuItem asChild>
+                                <button onClick={() => router.push("/admin")} className="w-full cursor-pointer">
+                                  Admin Panel
+                                </button>
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          <DropdownMenuSeparator />
+                        </>
+                      )}
+                      <DropdownMenuItem asChild>
+                        <button
+                          onClick={handleLogout}
+                          disabled={isLoggingOut}
+                          className="w-full cursor-pointer text-red-600 dark:text-red-400"
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          {isLoggingOut ? "Logging out..." : "Logout"}
+                        </button>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
+
+                {currentUser?.role === "admin" && null}
               </div>
             </div>
 

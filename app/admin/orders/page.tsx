@@ -57,7 +57,7 @@ const loadOrders = async () => {
     const response = await fetch('/api/orders')
     const data = await response.json()
 
-    console.log('[v0] Orders API response:', data)
+    console.log('Orders API response:', data)
 
     const ordersArray = Array.isArray(data) ? data : data.orders || data.data || []
 
@@ -79,7 +79,7 @@ const loadOrders = async () => {
 
     setOrders(ordersWithCustomerInfo.reverse())
   } catch (error) {
-    console.error('[v0] Error loading orders:', error)
+    console.error('Error loading orders:', error)
   }
 }
 
@@ -114,7 +114,7 @@ const loadOrders = async () => {
 
   const handleStatusChange = async (orderId: number, newStatus: string) => {
     try {
-      console.log(`[v0] Updating order ${orderId} status to ${newStatus}`)
+      console.log(`Updating order ${orderId} status to ${newStatus}`)
       const response = await fetch(`/api/orders/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -127,9 +127,9 @@ const loadOrders = async () => {
 
       // Reload orders to reflect the change
       await loadOrders()
-      console.log('[v0] Order status updated successfully')
+      console.log('Order status updated successfully')
     } catch (error) {
-      console.error('[v0] Error updating order status:', error)
+      console.error('Error updating order status:', error)
     }
   }
 
@@ -178,7 +178,7 @@ const loadOrders = async () => {
       setShowEditModal(false)
       setEditingOrder(null)
     } catch (error) {
-      console.error('[v0] Error updating order:', error)
+      console.error('Error updating order:', error)
       alert('Failed to update order')
     }
   }
@@ -195,7 +195,7 @@ const loadOrders = async () => {
       
       await loadOrders()
     } catch (error) {
-      console.error('[v0] Error deleting order:', error)
+      console.error('Error deleting order:', error)
       alert('Failed to delete order')
     }
   }

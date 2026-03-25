@@ -154,6 +154,31 @@ export const requireRole = async (request: Request, roles: UserRole[]) => {
   return auth
 }
 
+/**
+ * Check if user can access admin panel based on role and temporary access grants
+ * Admins always have access. Managers need either:
+ * - Manager access control setting is OFF, OR
+ * - Manager has active approved temporary access grant
+ */
+export async function canAccessAdmin(user: AuthUser): Promise<boolean> {
+  if (user.role === "admin") {
+    return true
+  }
+
+  if (user.role === "manager") {
+    // Dynamically import to avoid circular dependency
+    const { isManagerAccessControlEnabled, hasTemporaryAdminAccess } = await import("@/lib/access-control")
+    const controlEnabled = await isManagerAccessControlEnabled()
+    if (!controlEnabled) {
+      return true // Control is OFF, allow direct access
+    }
+    // Control is ON, check for active temporary access
+    return await hasTemporaryAdminAccess(user.id)
+  }
+
+  return false
+}
+
 export const getClientIp = (request: Request) => {
   const forwardedFor = request.headers.get("x-forwarded-for")
   if (forwardedFor) {

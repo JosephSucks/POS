@@ -78,7 +78,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (savedCart) {
       try {
         const parsedCart = JSON.parse(savedCart)
-        console.log('[v0] Loaded cart from localStorage:', parsedCart.length, 'items')
+        console.log('Loaded cart from localStorage:', parsedCart.length, 'items')
         setCart(parsedCart)
       } catch (error) {
         console.error("Failed to parse cart from localStorage:", error)
@@ -89,7 +89,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (savedCustomer) {
       try {
         const parsedCustomer = JSON.parse(savedCustomer)
-        console.log('[v0] Loaded customer from localStorage:', parsedCustomer.name)
+        console.log('Loaded customer from localStorage:', parsedCustomer.name)
         setCustomer(parsedCustomer)
       } catch (error) {
         console.error("Failed to parse customer from localStorage:", error)
@@ -119,7 +119,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addToCart = (product: Product) => {
     // Prevent adding if stock is 0 or not available
     if (!product.stock || product.stock <= 0) {
-      console.log('[v0] Cannot add sold-out product:', product.name)
+      console.log('Cannot add sold-out product:', product.name)
       return
     }
 
@@ -129,7 +129,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // Check if adding would exceed available stock
       const currentQuantity = existingItem?.quantity || 0
       if (currentQuantity + 1 > product.stock) {
-        console.log('[v0] Cannot exceed stock limit for:', product.name, 'Available:', product.stock, 'Requested:', currentQuantity + 1)
+        console.log('Cannot exceed stock limit for:', product.name, 'Available:', product.stock, 'Requested:', currentQuantity + 1)
         return prevCart
       }
 
@@ -154,7 +154,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     // Find the product to check stock limit
     const product = cart.find(item => item.id === productId)
     if (product && quantity > (product.stock || 0)) {
-      console.log('[v0] Cannot exceed stock limit. Available:', product.stock, 'Requested:', quantity)
+      console.log('Cannot exceed stock limit. Available:', product.stock, 'Requested:', quantity)
       return
     }
 

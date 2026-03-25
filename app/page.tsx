@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { AlertCircle, Loader2, LogIn, ShieldCheck } from "lucide-react"
+import { AlertCircle, Bold, Loader2, LogIn, ShieldCheck } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
 import { useForm } from "react-hook-form"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -133,14 +133,14 @@ export default function LoginPage() {
                 <ShieldCheck className="h-7 w-7" />
               </div>
               <div className="space-y-3">
-                <h1 className="text-4xl font-semibold tracking-tight">Joseph POS System</h1>
+                <h1 className="text-4xl font-semibold tracking-tight">Joseph POS v1 System</h1>
                 <p className="text-base text-slate-300">
-                  Secure staff access for the point of sale and admin dashboard.
+                  Blah blah blah, this is a demo POS system built with Next.js, React Hook Form, Zod, and Neon PostgreSQL.
                 </p>
               </div>
               <div className="grid gap-4 text-sm text-slate-300">
                 <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                  Sign in with your staff email and password to continue.
+                  Email: admin@gmail.com, Password: imadmin123 (admin role)
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 p-4">
                   Admin-only features stay protected behind role-based access.
