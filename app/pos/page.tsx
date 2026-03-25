@@ -1,15 +1,17 @@
 "use client"
 
-import { useState } from "react"
-import { Search, Settings, ShoppingCart, Moon, Sun } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { AlertCircle, Moon, Search, Settings, ShoppingCart, Sun } from "lucide-react"
+
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 import ProductGrid from "../components/product-grid"
 import CartSidebar from "../components/cart-sidebar"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Badge } from "@/components/ui/badge"
 import { useCart } from "../context/cart-context"
 import { useTheme } from "../components/theme-provider"
 
@@ -24,32 +26,52 @@ export default function POSPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [showCart, setShowCart] = useState(false)
-  const { cart, itemCount } = useCart()
-  const cartCount = itemCount
+  const [canAccessAdmin, setCanAccessAdmin] = useState(false)
+  const { itemCount } = useCart()
   const { theme, toggleTheme } = useTheme()
-
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      try {
+        const response = await fetch("/api/auth/me", { credentials: "include" })
+        const data = await response.json().catch(() => null)
+        setCanAccessAdmin(data?.user?.role === "admin")
+      } catch (error) {
+        console.error("[auth] Failed to load current user:", error)
+      }
+    }
+
+    loadCurrentUser()
+  }, [])
 
   const handleThemeToggle = async () => {
-    const newDarkMode = theme === 'light'
+    const newDarkMode = theme === "light"
     toggleTheme()
-    
+
     try {
-      await fetch('/api/settings/update-theme', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch("/api/settings/update-theme", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ darkMode: newDarkMode }),
       })
     } catch (error) {
-      console.error('Failed to save theme setting:', error)
+      console.error("Failed to save theme setting:", error)
     }
   }
 
+  const reasonMessage = useMemo(() => {
+    return searchParams.get("reason") === "forbidden"
+      ? "You do not have permission to access the admin area."
+      : ""
+  }, [searchParams])
+
   return (
-    <div className="h-screen bg-background flex flex-col md:flex-row overflow-hidden">
-      {/* Mobile: Cart Sheet */}
+    <div className="flex h-screen flex-col overflow-hidden bg-background md:flex-row">
       <Sheet open={showCart} onOpenChange={setShowCart}>
-        <SheetContent side="right" className="p-0 w-full sm:w-96 flex flex-col">
+        <SheetContent side="right" className="flex w-full flex-col p-0 sm:w-96">
           <div className="sr-only">
             <h2>Cart</h2>
           </div>
@@ -57,99 +79,101 @@ export default function POSPage() {
         </SheetContent>
       </Sheet>
 
-      {/* Desktop: Category Sidebar */}
-      <aside className="hidden md:flex md:w-56 lg:w-64 flex-col border-r bg-card/50">
-        <div className="p-6 border-b">
+      <aside className="hidden flex-col border-r bg-card/50 md:flex md:w-56 lg:w-64">
+        <div className="border-b p-6">
           <h2 className="text-lg font-bold tracking-tight">Categories</h2>
         </div>
         <ScrollArea className="flex-1">
-          <div className="p-4 space-y-2">
+          <div className="space-y-2 p-4">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
+                className={`w-full rounded-lg px-4 py-3 text-left text-sm font-medium transition-all ${
                   selectedCategory === cat.id
                     ? "bg-primary text-primary-foreground shadow-md"
                     : "text-foreground hover:bg-muted"
                 }`}
               >
-                <span className="text-xl">{cat.icon}</span>
-                <span className="truncate text-sm">{cat.name}</span>
+                <span className="mr-3 text-xl">{cat.icon}</span>
+                <span className="truncate">{cat.name}</span>
               </button>
             ))}
           </div>
         </ScrollArea>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Compact Header */}
-        <header className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b">
-          <div className="px-4 py-3 md:px-6 md:py-4 space-y-3 md:space-y-0">
-            {/* Top Row: Search + Cart + Settings */}
+      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur-sm">
+          <div className="space-y-3 px-4 py-3 md:px-6 md:py-4">
+            {reasonMessage && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{reasonMessage}</AlertDescription>
+              </Alert>
+            )}
+
             <div className="flex items-center justify-between gap-2 md:gap-3">
-              {/* Left: Search */}
-              <div className="relative flex-1 min-w-0">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <div className="relative min-w-0 flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search..."
-                  className="pl-9 pr-3 bg-muted border-0 text-sm"
+                  className="border-0 bg-muted pl-9 pr-3 text-sm"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(event) => setSearchQuery(event.target.value)}
                 />
               </div>
 
-              {/* Right: Cart + Theme + Settings */}
-              <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-                <Button 
+              <div className="flex flex-shrink-0 items-center gap-1 md:gap-2">
+                <Button
                   variant="ghost"
                   size="icon"
-                  className="md:hidden h-8 w-8 relative"
+                  className="relative h-8 w-8 md:hidden"
                   onClick={() => setShowCart(true)}
                 >
                   <ShoppingCart className="h-4 w-4" />
-                  {cartCount > 0 && (
-                    <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                      {cartCount}
+                  {itemCount > 0 && (
+                    <Badge className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center p-0 text-xs">
+                      {itemCount}
                     </Badge>
                   )}
                 </Button>
-                <Button 
+                <Button
                   variant="ghost"
                   size="icon"
                   className="h-8 w-8 md:h-9 md:w-9"
                   onClick={handleThemeToggle}
-                  title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+                  title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
                 >
-                  {theme === 'light' ? <Moon className="h-4 w-4 md:h-5 md:w-5" /> : <Sun className="h-4 w-4 md:h-5 md:w-5" />}
+                  {theme === "light" ? <Moon className="h-4 w-4 md:h-5 md:w-5" /> : <Sun className="h-4 w-4 md:h-5 md:w-5" />}
                 </Button>
-                <Button 
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 md:h-9 md:w-9"
-                  onClick={() => router.push("/admin")}
-                  title="Settings"
-                >
-                  <Settings className="h-4 w-4 md:h-5 md:w-5" />
-                </Button>
+                {canAccessAdmin && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 md:h-9 md:w-9"
+                    onClick={() => router.push("/admin")}
+                    title="Admin"
+                  >
+                    <Settings className="h-4 w-4 md:h-5 md:w-5" />
+                  </Button>
+                )}
               </div>
             </div>
 
-            {/* Mobile: Category Tabs */}
-            <div className="md:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide">
-              <div className="flex gap-2 pb-1 w-max">
+            <div className="scrollbar-hide -mx-4 overflow-x-auto px-4 md:hidden">
+              <div className="flex w-max gap-2 pb-1">
                 {CATEGORIES.map((cat) => (
                   <button
                     key={cat.id}
                     onClick={() => setSelectedCategory(cat.id)}
-                    className={`whitespace-nowrap px-3 py-1.5 rounded-full font-medium transition-all text-sm flex items-center gap-1.5 flex-shrink-0 ${
+                    className={`flex-shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition-all ${
                       selectedCategory === cat.id
                         ? "bg-primary text-primary-foreground"
-                        : "bg-muted hover:bg-muted/80 text-foreground"
+                        : "bg-muted text-foreground hover:bg-muted/80"
                     }`}
                   >
-                    <span>{cat.icon}</span>
+                    <span className="mr-1.5">{cat.icon}</span>
                     <span>{cat.name}</span>
                   </button>
                 ))}
@@ -158,7 +182,6 @@ export default function POSPage() {
           </div>
         </header>
 
-        {/* Products Grid */}
         <div className="flex-1 overflow-auto">
           <div className="px-4 py-6 md:px-6 md:py-8">
             <ProductGrid category={selectedCategory} searchQuery={searchQuery} />
@@ -166,11 +189,9 @@ export default function POSPage() {
         </div>
       </main>
 
-      {/* Desktop: Cart Sidebar */}
-      <aside className="hidden md:flex w-80 lg:w-96 border-l bg-card/50 flex-col overflow-hidden">
+      <aside className="hidden w-80 flex-col overflow-hidden border-l bg-card/50 md:flex lg:w-96">
         <CartSidebar />
       </aside>
     </div>
   )
 }
-

@@ -1,42 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { Pool } from '@neondatabase/serverless'
+import { NextResponse } from "next/server"
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+import { requireAuth } from "@/lib/auth"
+import { sql } from "@/lib/db"
 
-export async function POST(req: NextRequest) {
+export async function POST(request: Request) {
+  const auth = await requireAuth(request)
+  if ("response" in auth) {
+    return auth.response
+  }
+
   try {
-    const { darkMode } = await req.json()
+    const { darkMode } = await request.json()
 
-    if (typeof darkMode !== 'boolean') {
-      return NextResponse.json(
-        { error: 'Invalid darkMode value' },
-        { status: 400 }
-      )
+    if (typeof darkMode !== "boolean") {
+      return NextResponse.json({ error: "Invalid darkMode value" }, { status: 400 })
     }
 
-    const client = await pool.connect()
-    try {
-      // Update or insert the darkMode setting
-      await client.query(
-        `INSERT INTO settings (key, value, created_at, updated_at) 
-         VALUES ($1, $2, NOW(), NOW())
-         ON CONFLICT (key) DO UPDATE 
-         SET value = $2, updated_at = NOW()`,
-        ['darkMode', darkMode]
-      )
+    await sql`
+      INSERT INTO settings (key, value, created_at, updated_at)
+      VALUES ('darkMode', ${JSON.stringify(darkMode)}, NOW(), NOW())
+      ON CONFLICT (key) DO UPDATE
+      SET value = ${JSON.stringify(darkMode)}, updated_at = NOW()
+    `
 
-      return NextResponse.json(
-        { success: true, darkMode },
-        { status: 200 }
-      )
-    } finally {
-      client.release()
-    }
+    return NextResponse.json({ success: true, darkMode }, { status: 200 })
   } catch (error) {
-    console.error('Error updating theme setting:', error)
-    return NextResponse.json(
-      { error: 'Failed to update theme setting' },
-      { status: 500 }
-    )
+    console.error("[settings] Failed to update theme setting:", error)
+    return NextResponse.json({ error: "Failed to update theme setting" }, { status: 500 })
   }
 }

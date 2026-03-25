@@ -1,69 +1,54 @@
-import { neon } from '@neondatabase/serverless'
+import { requireAuth } from "@/lib/auth"
+import { sql } from "@/lib/db"
 
-const getDatabaseUrl = () => {
-  const url = 
-    process.env.DATABASE_URL ||
-    process.env.POSTGRES_URL ||
-    process.env.POSTGRES_URL_NON_POOLING ||
-    process.env.DATABASE_URL_UNPOOLED
-
-  if (!url) {
-    throw new Error('No database connection string found')
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const auth = await requireAuth(request)
+  if ("response" in auth) {
+    return auth.response
   }
-  return url
-}
 
-const sql = neon(getDatabaseUrl())
-
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
   try {
-    const { id } = await params
-    const customerId = id
-
-    console.log(`[v0] Fetching customer ${customerId}`)
+    const params = await props.params
+    const customerId = params.id
 
     const result = await sql`
-      SELECT * FROM customers WHERE id = ${customerId}
+      SELECT *
+      FROM customers
+      WHERE id = ${customerId}
     `
 
     if (result.length === 0) {
-      return Response.json(
-        { error: 'Customer not found' },
-        { status: 404 }
-      )
+      return Response.json({ error: "Customer not found" }, { status: 404 })
     }
 
     return Response.json(result[0])
   } catch (error) {
-    console.error('[v0] Error fetching customer:', error)
+    console.error("[customers] Failed to fetch customer:", error)
     return Response.json(
-      { 
-        error: 'Failed to fetch customer',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, 
-      { status: 500 }
+      {
+        error: "Failed to fetch customer",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
     )
   }
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
+  const auth = await requireAuth(request)
+  if ("response" in auth) {
+    return auth.response
+  }
+
   try {
-    const { id } = await params
-    const customerId = id
+    const params = await props.params
+    const customerId = params.id
     const body = await request.json()
     const { name, email, phone, loyalty_points } = body
 
-    console.log(`[v0] Updating customer ${customerId}:`, body)
-
     const result = await sql`
-      UPDATE customers 
-      SET 
+      UPDATE customers
+      SET
         name = COALESCE(${name}, name),
         email = COALESCE(${email}, email),
         phone = COALESCE(${phone}, phone),
@@ -74,60 +59,51 @@ export async function PUT(
     `
 
     if (result.length === 0) {
-      return Response.json(
-        { error: 'Customer not found' },
-        { status: 404 }
-      )
+      return Response.json({ error: "Customer not found" }, { status: 404 })
     }
-
-    console.log('[v0] Customer updated successfully:', result[0])
 
     return Response.json(result[0])
   } catch (error) {
-    console.error('[v0] Error updating customer:', error)
+    console.error("[customers] Failed to update customer:", error)
     return Response.json(
-      { 
-        error: 'Failed to update customer',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, 
-      { status: 500 }
+      {
+        error: "Failed to update customer",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
     )
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params
-    const customerId = id
+export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
+  const auth = await requireAuth(request)
+  if ("response" in auth) {
+    return auth.response
+  }
 
-    console.log(`[v0] Deleting customer ${customerId}`)
+  try {
+    const params = await props.params
+    const customerId = params.id
 
     const result = await sql`
-      DELETE FROM customers WHERE id = ${customerId}
+      DELETE FROM customers
+      WHERE id = ${customerId}
       RETURNING id
     `
 
     if (result.length === 0) {
-      return Response.json(
-        { error: 'Customer not found' },
-        { status: 404 }
-      )
+      return Response.json({ error: "Customer not found" }, { status: 404 })
     }
-
-    console.log('[v0] Customer deleted successfully')
 
     return Response.json({ success: true, id: customerId })
   } catch (error) {
-    console.error('[v0] Error deleting customer:', error)
+    console.error("[customers] Failed to delete customer:", error)
     return Response.json(
-      { 
-        error: 'Failed to delete customer',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      }, 
-      { status: 500 }
+      {
+        error: "Failed to delete customer",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
     )
   }
 }

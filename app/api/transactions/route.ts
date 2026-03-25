@@ -1,23 +1,24 @@
 import { db } from "@/app/services/database"
+import { requireAuth } from "@/lib/auth"
 
-export async function GET() {
+export async function GET(request: Request) {
+  const auth = await requireAuth(request)
+  if ("response" in auth) {
+    return auth.response
+  }
+
   try {
-    console.log('[v0] Fetching transactions from database...')
-    
     const transactions = await db.getTransactions()
-    
-    console.log(`[v0] Successfully fetched ${transactions.length} transactions`)
-    
     return Response.json(transactions)
   } catch (error) {
-    console.error('[v0] Error fetching transactions:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error("[transactions] Failed to fetch transactions:", error)
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
     return Response.json(
-      { 
-        error: 'Failed to fetch transactions',
-        details: errorMessage
-      }, 
-      { status: 500 }
+      {
+        error: "Failed to fetch transactions",
+        details: errorMessage,
+      },
+      { status: 500 },
     )
   }
 }

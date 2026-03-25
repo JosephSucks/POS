@@ -1,127 +1,223 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { LogIn, AlertCircle } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { AlertCircle, Loader2, LogIn, ShieldCheck } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { useForm } from "react-hook-form"
+import { useRouter, useSearchParams } from "next/navigation"
+import { z } from "zod"
+
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+
+const loginSchema = z.object({
+  email: z.string().trim().email("Enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
+})
+
+type LoginFormValues = z.infer<typeof loginSchema>
+
+const getReasonMessage = (reason: string | null) => {
+  if (reason === "auth") {
+    return "Please sign in to continue."
+  }
+
+  if (reason === "forbidden") {
+    return "You do not have permission to access that page."
+  }
+
+  return ""
+}
 
 export default function LoginPage() {
   const router = useRouter()
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const searchParams = useSearchParams()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isCheckingSession, setIsCheckingSession] = useState(true)
+
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  })
+
+  const reasonMessage = useMemo(() => getReasonMessage(searchParams.get("reason")), [searchParams])
 
   useEffect(() => {
-    // Check if already logged in
-    const isLoggedIn = localStorage.getItem('pos-logged-in')
-    if (isLoggedIn === 'true') {
-      router.push('/pos')
+    let isMounted = true
+
+    const checkSession = async () => {
+      try {
+        const response = await fetch("/api/auth/me", { credentials: "include" })
+
+        if (response.ok && isMounted) {
+          router.replace("/pos")
+          return
+        }
+      } catch (error) {
+        console.error("[auth] Failed to check session:", error)
+      }
+
+      if (isMounted) {
+        setIsCheckingSession(false)
+      }
+    }
+
+    checkSession()
+
+    return () => {
+      isMounted = false
     }
   }, [router])
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
+  const onSubmit = async (values: LoginFormValues) => {
+    setIsSubmitting(true)
+    form.clearErrors("root")
 
     try {
-      // Simple authentication - in a real system, validate against a backend
-      // For now, accept any non-empty username/password combo
-      if (!username.trim() || !password.trim()) {
-        setError("Please enter both username and password")
-        setIsLoading(false)
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(values),
+      })
+
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        form.setError("root", {
+          message: data.error || "Unable to sign in",
+        })
         return
       }
 
-      // Simulate login process
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      // Store login state in localStorage and cookie
-      localStorage.setItem('pos-logged-in', 'true')
-      localStorage.setItem('pos-username', username)
-
-      // Also set cookie for middleware to check
-      document.cookie = 'pos-logged-in=true; path=/'
-
-      // Redirect to POS
-      router.push('/pos')
-    } catch (err) {
-      console.error('[v0] Login error:', err)
-      setError("Login failed. Please try again.")
-      setIsLoading(false)
+      router.push("/pos")
+    } catch (error) {
+      console.error("[auth] Login error:", error)
+      form.setError("root", {
+        message: "Unable to sign in right now. Please try again.",
+      })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('pos-logged-in')
-    localStorage.removeItem('pos-username')
+  if (isCheckingSession) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+        <Card className="w-full max-w-md shadow-2xl">
+          <CardContent className="flex items-center justify-center py-16">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
+  const rootError = form.formState.errors.root?.message
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
-      <Card className="w-full max-w-md shadow-2xl">
-        <CardHeader className="space-y-2 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-              <LogIn className="h-8 w-8 text-primary" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+      <div className="mx-auto flex min-h-screen max-w-5xl items-center justify-center">
+        <div className="grid w-full gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="hidden flex-col justify-center text-white lg:flex">
+            <div className="max-w-lg space-y-6">
+              <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15">
+                <ShieldCheck className="h-7 w-7" />
+              </div>
+              <div className="space-y-3">
+                <h1 className="text-4xl font-semibold tracking-tight">Joseph POS System</h1>
+                <p className="text-base text-slate-300">
+                  Secure staff access for the point of sale and admin dashboard.
+                </p>
+              </div>
+              <div className="grid gap-4 text-sm text-slate-300">
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  Sign in with your staff email and password to continue.
+                </div>
+                <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  Admin-only features stay protected behind role-based access.
+                </div>
+              </div>
             </div>
           </div>
-          <CardTitle className="text-3xl">Joseph POS System</CardTitle>
-          <CardDescription>Enter your credentials to access the Point of Sale</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
 
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                placeholder="Enter username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                disabled={isLoading}
-                autoFocus
-              />
-            </div>
+          <Card className="w-full shadow-2xl">
+            <CardHeader className="space-y-2 text-center">
+              <div className="mb-4 flex justify-center">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                  <LogIn className="h-8 w-8 text-primary" />
+                </div>
+              </div>
+              <CardTitle className="text-3xl">Staff Login</CardTitle>
+              <CardDescription>Enter your email and password to access the POS</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+                  {(reasonMessage || rootError) && (
+                    <Alert variant={rootError ? "destructive" : "default"}>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{rootError || reasonMessage}</AlertDescription>
+                    </Alert>
+                  )}
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={isLoading}
-              />
-            </div>
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="name@company.com"
+                            autoComplete="email"
+                            disabled={isSubmitting}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            <Button
-              type="submit"
-              className="w-full"
-              size="lg"
-              disabled={isLoading}
-            >
-              {isLoading ? "Logging in..." : "Login"}
-            </Button>
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Enter your password"
+                            autoComplete="current-password"
+                            disabled={isSubmitting}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            <p className="text-xs text-center text-muted-foreground pt-4">
-              For demo purposes, enter any username and password
-            </p>
-          </form>
-        </CardContent>
-      </Card>
+                  <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in"}
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }

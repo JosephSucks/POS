@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Minus, Plus, ShoppingCart, Trash2, User, Tag, LogOut, X } from "lucide-react"
+import { Minus, Plus, ShoppingCart, Trash2, User, Tag, LogOut } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -16,16 +16,27 @@ export default function CartSidebar() {
     useCart()
   const [showCustomerModal, setShowCustomerModal] = useState(false)
   const [showDiscountModal, setShowDiscountModal] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const handleCheckout = () => {
     router.push("/checkout")
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('pos-logged-in')
-    localStorage.removeItem('pos-username')
-    document.cookie = 'pos-logged-in=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC'
-    router.push('/')
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      })
+    } catch (error) {
+      console.error("[auth] Logout failed:", error)
+    } finally {
+      router.push("/")
+      router.refresh()
+      setIsLoggingOut(false)
+    }
   }
 
   return (
@@ -40,7 +51,6 @@ export default function CartSidebar() {
         </h2>
       </div>
 
-      {/* Customer Section */}
       <div className="border-b p-4">
         <Button
           variant="outline"
@@ -52,7 +62,6 @@ export default function CartSidebar() {
         </Button>
       </div>
 
-      {/* Discount Section */}
       <div className="border-b p-4">
         <Button
           variant="outline"
@@ -88,7 +97,7 @@ export default function CartSidebar() {
                 </div>
                 <div className="flex flex-1 flex-col">
                   <div className="flex justify-between">
-                    <h3 className="font-medium line-clamp-1">{item.name}</h3>
+                    <h3 className="line-clamp-1 font-medium">{item.name}</h3>
                     <p className="font-medium">${(item.price * item.quantity).toFixed(2)}</p>
                   </div>
                   <p className="text-sm text-muted-foreground">${item.price.toFixed(2)} each</p>
@@ -128,7 +137,7 @@ export default function CartSidebar() {
         )}
       </div>
 
-      <div className="border-t p-4 space-y-2">
+      <div className="space-y-2 border-t p-4">
         <div className="mb-4 space-y-2">
           <div className="flex justify-between">
             <p>Subtotal</p>
@@ -148,9 +157,9 @@ export default function CartSidebar() {
         <Button className="w-full" size="lg" disabled={cart.length === 0} onClick={handleCheckout}>
           Checkout
         </Button>
-        <Button variant="outline" className="w-full" onClick={handleLogout}>
-          <LogOut className="h-4 w-4 mr-2" />
-          Logout
+        <Button variant="outline" className="w-full" onClick={handleLogout} disabled={isLoggingOut}>
+          <LogOut className="mr-2 h-4 w-4" />
+          {isLoggingOut ? "Logging out..." : "Logout"}
         </Button>
       </div>
       <CustomerModal isOpen={showCustomerModal} onClose={() => setShowCustomerModal(false)} />

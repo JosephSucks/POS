@@ -1,22 +1,35 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 
-export function middleware(request: NextRequest) {
+import { getAuthTokenFromRequest, verifyAuthToken } from "@/lib/auth"
+
+export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
+  const token = getAuthTokenFromRequest(request)
 
-  // Only protect /pos route
-  if (pathname.startsWith('/pos')) {
-    const isLoggedIn = request.cookies.get('pos-logged-in')?.value
-
-    // If not logged in, redirect to login page
-    if (!isLoggedIn) {
-      return NextResponse.redirect(new URL('/', request.url))
-    }
+  if (!token) {
+    const loginUrl = new URL("/", request.url)
+    loginUrl.searchParams.set("reason", "auth")
+    return NextResponse.redirect(loginUrl)
   }
 
-  return NextResponse.next()
+  try {
+    const user = await verifyAuthToken(token)
+
+    if (pathname.startsWith("/admin") && user.role !== "admin") {
+      const posUrl = new URL("/pos", request.url)
+      posUrl.searchParams.set("reason", "forbidden")
+      return NextResponse.redirect(posUrl)
+    }
+
+    return NextResponse.next()
+  } catch {
+    const loginUrl = new URL("/", request.url)
+    loginUrl.searchParams.set("reason", "auth")
+    return NextResponse.redirect(loginUrl)
+  }
 }
 
 export const config = {
-  matcher: ['/pos/:path*'],
+  matcher: ["/pos/:path*", "/admin/:path*"],
 }
