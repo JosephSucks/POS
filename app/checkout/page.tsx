@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, CreditCard, Wallet, Loader2 } from "lucide-react"
@@ -9,10 +7,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useCart } from "../context/cart-context"
+import { useTable } from "../context/table-context"
 
 export default function CheckoutPage() {
   const router = useRouter()
   const { cart, cartTotal, clearCart, customer, discountAmount } = useCart()
+  const { currentTableId, markTableAvailable } = useTable()
   const [paymentMethod, setPaymentMethod] = useState("cash")
   const [isHydrated, setIsHydrated] = useState(false)
   
@@ -94,6 +94,17 @@ export default function CheckoutPage() {
       
       const successUrl = `/success?${successParams.toString()}`
       console.log('Redirecting to success page:', successUrl)
+      
+      // Mark table as available after successful checkout
+      if (currentTableId) {
+        try {
+          await markTableAvailable(currentTableId)
+          console.log('Table marked as available')
+        } catch (error) {
+          console.error('Failed to mark table as available:', error)
+          // Don't block the checkout flow on this error
+        }
+      }
       
       // Clear cart first
       clearCart()

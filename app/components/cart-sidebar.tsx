@@ -1,12 +1,14 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Minus, Plus, ShoppingCart, Trash2, User, Tag, LogOut } from "lucide-react"
-import { useState } from "react"
+import { Minus, Plus, ShoppingCart, Trash2, User, Tag, LogOut, AlertCircle } from "lucide-react"
+import { useState, useEffect, useRef } from "react"
 
 import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { IMAGE_PLACEHOLDER } from "@/lib/image-placeholder"
 import { useCart } from "../context/cart-context"
+import { useTable } from "../context/table-context"
 import CustomerModal from "./customer-modal"
 import DiscountModal from "./discount-modal"
 
@@ -14,9 +16,48 @@ export default function CartSidebar() {
   const router = useRouter()
   const { cart, removeFromCart, updateQuantity, cartTotal, itemCount, customer, appliedDiscount, discountAmount } =
     useCart()
+  const { currentTableId, tables, markTableOccupied, tableStatusPending } = useTable()
   const [showCustomerModal, setShowCustomerModal] = useState(false)
   const [showDiscountModal, setShowDiscountModal] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [tableOccupiedStatus, setTableOccupiedStatus] = useState<Set<number>>(new Set())
+  const prevCartLengthRef = useRef(0)
+
+  const selectedTable = tables.find((t) => t.id === currentTableId)
+
+  // Track when first item is added and mark table as occupied
+  useEffect(() => {
+    if (!currentTableId) {
+      prevCartLengthRef.current = 0
+      setTableOccupiedStatus(new Set())
+      return
+    }
+
+    const wasEmpty = prevCartLengthRef.current === 0
+    const isNowEmpty = cart.length === 0
+    const hasItems = cart.length > 0
+
+    // First item added to cart
+    if (wasEmpty && hasItems && !tableOccupiedStatus.has(currentTableId)) {
+      prevCartLengthRef.current = cart.length
+      
+      markTableOccupied(currentTableId).catch((error) => {
+        console.error("Failed to mark table as occupied:", error)
+      })
+
+      setTableOccupiedStatus((prev) => new Set(prev).add(currentTableId))
+    } else if (isNowEmpty && tableOccupiedStatus.has(currentTableId)) {
+      // Cart emptied, reset the flag
+      setTableOccupiedStatus((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(currentTableId)
+        return newSet
+      })
+      prevCartLengthRef.current = 0
+    } else {
+      prevCartLengthRef.current = cart.length
+    }
+  }, [cart.length, currentTableId, tableOccupiedStatus, markTableOccupied])
 
   const handleCheckout = () => {
     router.push("/checkout")
@@ -50,6 +91,19 @@ export default function CartSidebar() {
           </span>
         </h2>
       </div>
+
+      {selectedTable && (
+        <div className={`border-b p-3 ${
+          tableStatusPending.has(selectedTable.id)
+            ? "bg-blue-100 dark:bg-blue-900 animate-pulse"
+            : "bg-blue-50 dark:bg-blue-950"
+        }`}>
+          <p className="text-xs font-medium text-blue-900 dark:text-blue-100">
+            📍 Table {selectedTable.table_number} ({selectedTable.capacity} seats)
+            {selectedTable.status === "occupied" && <span className="ml-2">🔴 Occupied</span>}
+          </p>
+        </div>
+      )}
 
       <div className="border-b p-4">
         <Button
@@ -154,7 +208,20 @@ export default function CartSidebar() {
             <p>${(cartTotal - discountAmount).toFixed(2)}</p>
           </div>
         </div>
-        <Button className="w-full" size="lg" disabled={cart.length === 0} onClick={handleCheckout}>
+        {cart.length > 0 && !selectedTable && (
+          <Alert className="mb-2 border-yellow-300 bg-yellow-50 dark:bg-yellow-950">
+            <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+            <AlertDescription className="text-xs text-yellow-800 dark:text-yellow-200">
+              Please select a table to proceed with checkout
+            </AlertDescription>
+          </Alert>
+        )}
+        <Button
+          className="w-full"
+          size="lg"
+          disabled={cart.length === 0 || !selectedTable}
+          onClick={handleCheckout}
+        >
           Checkout
         </Button>
         <Button variant="outline" className="w-full" onClick={handleLogout} disabled={isLoggingOut}>

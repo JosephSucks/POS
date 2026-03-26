@@ -19,7 +19,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import ProductGrid from "../components/product-grid"
 import CartSidebar from "../components/cart-sidebar"
+import TableSidebar from "../components/table-sidebar"
 import { useCart } from "../context/cart-context"
+import { useTable } from "../context/table-context"
 import { useTheme } from "../components/theme-provider"
 import { AdminAccessRequestButton } from "@/components/admin-access-request-button"
 import type { AuthUser } from "@/lib/auth"
@@ -47,6 +49,7 @@ export default function POSPage() {
   const [temporaryAdminAccess, setTemporaryAdminAccess] = useState(false)
   const [accessRequestStatus, setAccessRequestStatus] = useState<"pending" | "approved" | "denied" | null>(null)
   const { itemCount } = useCart()
+  const { currentTableId } = useTable()
   const { theme, toggleTheme } = useTheme()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -153,7 +156,13 @@ export default function POSPage() {
             ))}
           </div>
         </ScrollArea>
+        <TableSidebar />
       </aside>
+
+      {/* Mobile Table Selector */}
+      <div className="md:hidden border-b bg-card/50 p-3">
+        <TableSidebar />
+      </div>
 
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="sticky top-0 z-20 border-b bg-background/95 backdrop-blur-sm">
@@ -237,14 +246,10 @@ export default function POSPage() {
                         <>
                           {managerAccessControlEnabled ? (
                             <>
-                              <DropdownMenuItem asChild>
-                                <div className="w-full">
-                                  <AdminAccessRequestButton
-                                    controlEnabled={managerAccessControlEnabled}
-                                    currentStatus={accessRequestStatus}
-                                  />
-                                </div>
-                              </DropdownMenuItem>
+                              <AdminAccessRequestButton
+                                controlEnabled={managerAccessControlEnabled}
+                                currentStatus={accessRequestStatus}
+                              />
                               {temporaryAdminAccess && (
                                 <DropdownMenuItem asChild>
                                   <button onClick={() => router.push("/admin")} className="w-full cursor-pointer text-green-600 dark:text-green-400">

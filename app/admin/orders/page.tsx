@@ -633,6 +633,221 @@ const loadOrders = async () => {
           })
         )}
       </div>
+
+      {/* View Order Details Modal */}
+      <Dialog open={showOrderDetails} onOpenChange={setShowOrderDetails}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Order Details</DialogTitle>
+          </DialogHeader>
+          {selectedOrder && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Order ID</p>
+                  <p className="font-semibold">#{selectedOrder.receiptNumber}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Customer</p>
+                  <p className="font-semibold">{selectedOrder.customerName}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Date</p>
+                  <p className="font-semibold">{formatDate(selectedOrder.timestamp)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Status</p>
+                  <Badge className={getStatusBadge(getOrderStatus(selectedOrder)).color}>
+                    {getStatusBadge(getOrderStatus(selectedOrder)).label}
+                  </Badge>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <h3 className="font-semibold mb-3">Items</h3>
+                <div className="space-y-2">
+                  {selectedOrder.items.map((item, idx) => (
+                    <div key={idx} className="flex justify-between text-sm p-2 bg-muted rounded">
+                      <div>
+                        <p className="font-medium">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
+                      </div>
+                      <p className="font-medium">${Number(item.total || item.price * item.quantity).toFixed(2)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm">Subtotal</span>
+                  <span className="font-medium">${Number(selectedOrder.subtotal).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm">Tax</span>
+                  <span className="font-medium">${Number(selectedOrder.tax).toFixed(2)}</span>
+                </div>
+                {selectedOrder.discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span className="text-sm">Discount</span>
+                    <span className="font-medium">-${Number(selectedOrder.discount).toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-lg font-bold pt-2 border-t">
+                  <span>Total</span>
+                  <span>${Number(selectedOrder.total).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowOrderDetails(false)}>Close</Button>
+            <Button onClick={() => { setShowOrderDetails(false); handleEditOrder(selectedOrder!); }}>Edit Order</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Order Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Order #{editingOrder?.receiptNumber}</DialogTitle>
+          </DialogHeader>
+          {editingOrder && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold mb-3">Order Items</h3>
+                <div className="space-y-3">
+                  {editFormData.items.map((item, idx) => (
+                    <div key={idx} className="p-3 border rounded space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <p className="font-medium">{item.name}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(idx)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div>
+                          <Label className="text-xs">Quantity</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => updateItemQuantity(idx, parseInt(e.target.value) || 0)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Price</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={item.price}
+                            onChange={(e) => updateItemPrice(idx, parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Subtotal</Label>
+                          <Input
+                            type="text"
+                            value={`$${item.total.toFixed(2)}`}
+                            disabled
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-3">
+                <div>
+                  <Label htmlFor="subtotal">Subtotal</Label>
+                  <Input
+                    id="subtotal"
+                    type="number"
+                    step="0.01"
+                    value={editFormData.subtotal}
+                    onChange={(e) => {
+                      const newSubtotal = parseFloat(e.target.value) || 0
+                      const newTax = newSubtotal * 0.1
+                      const newTotal = newSubtotal + newTax - editFormData.discount
+                      setEditFormData({
+                        ...editFormData,
+                        subtotal: newSubtotal,
+                        tax: newTax,
+                        total: newTotal
+                      })
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="tax">Tax</Label>
+                  <Input
+                    id="tax"
+                    type="number"
+                    step="0.01"
+                    value={editFormData.tax}
+                    onChange={(e) => {
+                      const newTax = parseFloat(e.target.value) || 0
+                      const newTotal = editFormData.subtotal + newTax - editFormData.discount
+                      setEditFormData({
+                        ...editFormData,
+                        tax: newTax,
+                        total: newTotal
+                      })
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="discount">Discount</Label>
+                  <Input
+                    id="discount"
+                    type="number"
+                    step="0.01"
+                    value={editFormData.discount}
+                    onChange={(e) => {
+                      const newDiscount = parseFloat(e.target.value) || 0
+                      const newTotal = editFormData.subtotal + editFormData.tax - newDiscount
+                      setEditFormData({
+                        ...editFormData,
+                        discount: newDiscount,
+                        total: newTotal
+                      })
+                    }}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="total">Total</Label>
+                  <Input
+                    id="total"
+                    type="number"
+                    step="0.01"
+                    value={editFormData.total}
+                    disabled
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditModal(false)}>Cancel</Button>
+            <Button onClick={handleSaveEdit}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

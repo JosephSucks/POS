@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import { CartProvider } from "./context/cart-context"
+import { TableProvider } from "./context/table-context"
 import { ThemeProvider } from "./components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 
@@ -23,7 +24,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} bg-background text-foreground`}>
         <ThemeProvider>
-          <CartProvider>{children}</CartProvider>
+          <TableProvider>
+            <CartProvider>{children}</CartProvider>
+          </TableProvider>
         </ThemeProvider>
         <Toaster />
       </body>
