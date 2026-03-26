@@ -1,10 +1,17 @@
 import { db } from "@/app/services/database"
-import { requireRole } from "@/lib/auth"
+import { requireAuth } from "@/lib/auth"
+import { canAccessAdmin } from "@/lib/access-control"
 
 export async function GET(request: Request) {
-  const auth = await requireRole(request, ["admin"])
+  const auth = await requireAuth(request)
   if ("response" in auth) {
     return auth.response
+  }
+
+  // Check if user has admin access (includes managers with temporary access)
+  const hasAccess = await canAccessAdmin(auth.user)
+  if (!hasAccess) {
+    return Response.json({ error: "Unauthorized" }, { status: 403 })
   }
 
   try {

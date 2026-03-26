@@ -29,6 +29,20 @@ interface TableContextType {
   ) => Promise<void>
   markTableOccupied: (tableId: number, orderId?: number) => Promise<void>
   markTableAvailable: (tableId: number) => Promise<void>
+  reserveTable: (tableId: number, reservationDetails: ReservationDetails) => Promise<void>
+  unreserveTable: (tableId: number) => Promise<void>
+  extendReservation: (tableId: number, newEndTime: Date) => Promise<void>
+}
+
+export interface ReservationDetails {
+  type: "simple" | "timed"
+  from?: Date
+  to?: Date
+  fromLocalString?: string
+  toLocalString?: string
+  customerName?: string
+  customerPhone?: string
+  notes?: string
 }
 
 const TableContext = createContext<TableContextType | undefined>(undefined)
@@ -36,7 +50,7 @@ const TableContext = createContext<TableContextType | undefined>(undefined)
 export function TableProvider({ children }: { children: React.ReactNode }) {
   const [currentTableId, setCurrentTableId] = useState<number | null>(null)
   const [tables, setTables] = useState<Table[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [isHydrated, setIsHydrated] = useState(false)
   const [tableStatusPending, setTableStatusPending] = useState<Set<number>>(new Set())
 
@@ -49,23 +63,30 @@ export function TableProvider({ children }: { children: React.ReactNode }) {
     setIsHydrated(true)
   }, [])
 
-  // Fetch tables on mount
+  // Refresh tables when page becomes visible (tab focus)
   useEffect(() => {
-    if (isHydrated) {
-      fetchTables()
-    }
-  }, [isHydrated])
+    if (!isHydrated || tables.length === 0) return
 
-  // Poll for table status updates every 10 seconds
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchTables()
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
+  }, [isHydrated, tables.length])
+
+  // Poll for table status updates every 10 seconds (only if tables are loaded)
   useEffect(() => {
-    if (!isHydrated) return
+    if (!isHydrated || tables.length === 0) return
 
     const interval = setInterval(() => {
       fetchTables()
     }, 10000)
 
     return () => clearInterval(interval)
-  }, [isHydrated])
+  }, [isHydrated, tables.length])
 
   const fetchTables = async () => {
     try {
@@ -74,12 +95,19 @@ export function TableProvider({ children }: { children: React.ReactNode }) {
       })
       if (response.ok) {
         const data = await response.json()
+        console.log("Fetched tables:", data)
         setTables(data)
+        return true
+      } else if (response.status === 401) {
+        console.error("Got 401 from /api/tables - user not authenticated")
+        return false
       } else if (response.status !== 404) {
         console.error("Failed to fetch tables:", response.status)
+        return false
       }
     } catch (error) {
       console.error("Failed to fetch tables:", error)
+      return false
     } finally {
       setLoading(false)
     }
@@ -155,6 +183,159 @@ export function TableProvider({ children }: { children: React.ReactNode }) {
     await updateTableStatus(tableId, "available")
   }
 
+  const reserveTable = async (tableId: number, reservationDetails: ReservationDetails) => {
+    setTableStatusPending((prev) => new Set(prev).add(tableId))
+
+    try {
+      // Use local time strings for storage
+      const fromStr = reservationDetails.fromLocalString || reservationDetails.from?.toISOString() || null
+      const toStr = reservationDetails.toLocalString || reservationDetails.to?.toISOString() || null
+
+      // Optimistic update
+      setTables((prev) =>
+        prev.map((table) =>
+          table.id === tableId
+            ? {
+                ...table,
+                status: "reserved",
+                reserved_from: fromStr,
+                reserved_to: toStr,
+              }
+            : table
+        )
+      )
+
+      const response = await fetch(`/api/tables/${tableId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "reserve",
+          type: reservationDetails.type,
+          from: fromStr,
+          to: toStr,
+          customerName: reservationDetails.customerName,
+          customerPhone: reservationDetails.customerPhone,
+          notes: reservationDetails.notes,
+        }),
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        console.error(`Failed to reserve table ${tableId}:`, response.status)
+        await fetchTables()
+        throw new Error(`Failed to reserve table: ${response.status}`)
+      }
+
+      const updatedTable = await response.json()
+      setTables((prev) =>
+        prev.map((table) => (table.id === tableId ? updatedTable : table))
+      )
+    } catch (error) {
+      console.error(`Error reserving table ${tableId}:`, error)
+      await fetchTables()
+      throw error
+    } finally {
+      setTableStatusPending((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(tableId)
+        return newSet
+      })
+    }
+  }
+
+  const unreserveTable = async (tableId: number) => {
+    setTableStatusPending((prev) => new Set(prev).add(tableId))
+
+    try {
+      // Optimistic update
+      setTables((prev) =>
+        prev.map((table) =>
+          table.id === tableId
+            ? {
+                ...table,
+                status: "available",
+                reserved_from: null,
+                reserved_to: null,
+              }
+            : table
+        )
+      )
+
+      const response = await fetch(`/api/tables/${tableId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "unreserve",
+        }),
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        console.error(`Failed to unreserve table ${tableId}:`, response.status)
+        await fetchTables()
+        throw new Error(`Failed to unreserve table: ${response.status}`)
+      }
+
+      const updatedTable = await response.json()
+      setTables((prev) =>
+        prev.map((table) => (table.id === tableId ? updatedTable : table))
+      )
+    } catch (error) {
+      console.error(`Error unreserving table ${tableId}:`, error)
+      await fetchTables()
+      throw error
+    } finally {
+      setTableStatusPending((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(tableId)
+        return newSet
+      })
+    }
+  }
+
+  const extendReservation = async (tableId: number, newEndTime: Date) => {
+    setTableStatusPending((prev) => new Set(prev).add(tableId))
+
+    try {
+      const response = await fetch(`/api/tables/${tableId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "extend",
+          to: newEndTime.toISOString(),
+        }),
+        credentials: "include",
+      })
+
+      if (!response.ok) {
+        console.error(`Failed to extend reservation for table ${tableId}:`, response.status)
+        await fetchTables()
+        throw new Error(`Failed to extend reservation: ${response.status}`)
+      }
+
+      const updatedTable = await response.json()
+      setTables((prev) =>
+        prev.map((table) => (table.id === tableId ? updatedTable : table))
+      )
+    } catch (error) {
+      console.error(`Error extending reservation for table ${tableId}:`, error)
+      await fetchTables()
+      throw error
+    } finally {
+      setTableStatusPending((prev) => {
+        const newSet = new Set(prev)
+        newSet.delete(tableId)
+        return newSet
+      })
+    }
+  }
+
   const selectTable = (tableId: number) => {
     setCurrentTableId(tableId)
     localStorage.setItem("selectedTableId", tableId.toString())
@@ -178,6 +359,9 @@ export function TableProvider({ children }: { children: React.ReactNode }) {
         updateTableStatus,
         markTableOccupied,
         markTableAvailable,
+        reserveTable,
+        unreserveTable,
+        extendReservation,
       }}
     >
       {children}

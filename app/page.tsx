@@ -59,8 +59,9 @@ export default function LoginPage() {
           router.replace("/pos")
           return
         }
+        // 401 is expected on login page when not authenticated yet
       } catch (error) {
-        console.error("[auth] Failed to check session:", error)
+        // Silently ignore errors on login page
       }
 
       if (isMounted) {
@@ -98,6 +99,8 @@ export default function LoginPage() {
         return
       }
 
+      // Wait 1 second to ensure auth cookie is fully set before navigating
+      await new Promise(resolve => setTimeout(resolve, 1000))
       router.push("/pos")
     } catch (error) {
       console.error("[auth] Login error:", error)

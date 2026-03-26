@@ -16,7 +16,7 @@ export default function CartSidebar() {
   const router = useRouter()
   const { cart, removeFromCart, updateQuantity, cartTotal, itemCount, customer, appliedDiscount, discountAmount } =
     useCart()
-  const { currentTableId, tables, markTableOccupied, tableStatusPending } = useTable()
+  const { currentTableId, tables, markTableOccupied, markTableAvailable, tableStatusPending } = useTable()
   const [showCustomerModal, setShowCustomerModal] = useState(false)
   const [showDiscountModal, setShowDiscountModal] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -47,7 +47,11 @@ export default function CartSidebar() {
 
       setTableOccupiedStatus((prev) => new Set(prev).add(currentTableId))
     } else if (isNowEmpty && tableOccupiedStatus.has(currentTableId)) {
-      // Cart emptied, reset the flag
+      // Cart emptied while table was marked occupied - reset to available
+      markTableAvailable(currentTableId).catch((error) => {
+        console.error("Failed to mark table as available:", error)
+      })
+
       setTableOccupiedStatus((prev) => {
         const newSet = new Set(prev)
         newSet.delete(currentTableId)
@@ -57,7 +61,7 @@ export default function CartSidebar() {
     } else {
       prevCartLengthRef.current = cart.length
     }
-  }, [cart.length, currentTableId, tableOccupiedStatus, markTableOccupied])
+  }, [cart.length, currentTableId])
 
   const handleCheckout = () => {
     router.push("/checkout")

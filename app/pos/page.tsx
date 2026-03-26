@@ -49,7 +49,7 @@ export default function POSPage() {
   const [temporaryAdminAccess, setTemporaryAdminAccess] = useState(false)
   const [accessRequestStatus, setAccessRequestStatus] = useState<"pending" | "approved" | "denied" | null>(null)
   const { itemCount } = useCart()
-  const { currentTableId } = useTable()
+  const { currentTableId, fetchTables } = useTable()
   const { theme, toggleTheme } = useTheme()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -73,6 +73,12 @@ export default function POSPage() {
     // Refresh access status every 30 seconds for managers
     const interval = setInterval(loadCurrentUser, 30000)
     return () => clearInterval(interval)
+  }, [])
+
+  // Fetch tables when POS page loads (auth is guaranteed to be ready at this point)
+  useEffect(() => {
+    console.log("[POS] Loading tables...")
+    fetchTables()
   }, [])
 
   const handleLogout = async () => {

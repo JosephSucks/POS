@@ -164,7 +164,13 @@ export default function SettingsPage() {
         body: JSON.stringify(settings),
       })
       
-      if (!response.ok) throw new Error('Failed to save settings')
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        if (response.status === 403) {
+          throw new Error('You do not have permission to perform this action')
+        }
+        throw new Error(data.error || 'Failed to save settings')
+      }
       
       setHasChanges(false)
       toast({

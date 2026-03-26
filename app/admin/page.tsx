@@ -312,48 +312,6 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Button 
-              className="h-20 flex-col gap-2"
-              onClick={() => router.push('/admin/products')}
-            >
-              <Package className="h-6 w-6" />
-              Add Product
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col gap-2 bg-transparent"
-              onClick={() => router.push('/admin/orders')}
-            >
-              <ShoppingCart className="h-6 w-6" />
-              View Orders
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col gap-2 bg-transparent"
-              onClick={() => router.push('/admin/customers')}
-            >
-              <Users className="h-6 w-6" />
-              Manage Customers
-            </Button>
-            <Button 
-              variant="outline" 
-              className="h-20 flex-col gap-2 bg-transparent"
-              onClick={() => router.push('/admin/analytics')}
-            >
-              <BarChart3 className="h-6 w-6" />
-              View Analytics
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
