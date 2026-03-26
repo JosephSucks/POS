@@ -7,6 +7,7 @@ erDiagram
     CATEGORIES ||--o{ PRODUCTS : contains
     PRODUCTS ||--|| INVENTORY : has
     PRODUCTS ||--o{ ORDER_ITEMS : "ordered in"
+    TABLES ||--o{ ORDERS : "has many"
     CATEGORIES {
         int id PK
         string name UK
@@ -45,10 +46,23 @@ erDiagram
         timestamp created_at
         timestamp updated_at
     }
+
+    TABLES {
+        int id PK
+        int table_number UK
+        int capacity
+        string status
+        int current_order_id FK
+        timestamp reserved_from
+        timestamp reserved_to
+        timestamp created_at
+        timestamp updated_at
+    }
     
     ORDERS {
         int id PK
         int customer_id FK
+        int table_id FK
         decimal subtotal
         decimal discount
         decimal tax
@@ -82,11 +96,16 @@ erDiagram
 | **products** | All menu items with pricing | One category → Many products; One product → One inventory |
 | **inventory** | Stock levels per product | One product → One inventory |
 
+### Dine-In Management
+| Table | Purpose | Key Relationships |
+|-------|---------|-------------------|
+| **tables** | Restaurant tables for dine-in service | One table → Many orders |
+
 ### Sales & Orders
 | Table | Purpose | Key Relationships |
 |-------|---------|-------------------|
 | **customers** | Customer information | One customer → Many orders |
-| **orders** | Transaction records | One order → Many order items |
+| **orders** | Transaction records | One order → Many order items; One table → Many orders |
 | **order_items** | Individual items in each order | One order → Many items; Many items → One product |
 
 ## Detailed Schema
@@ -134,10 +153,24 @@ erDiagram
 - updated_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE)
 ```
 
+### tables
+```
+- id (INT, PRIMARY KEY, AUTO_INCREMENT)
+- table_number (INT, UNIQUE) - Physical table identifier
+- capacity (INT, DEFAULT 4) - Seating capacity
+- status (VARCHAR(50), DEFAULT 'available') - available, occupied, reserved
+- current_order_id (INT, FOREIGN KEY → orders.id, nullable) - Current active order
+- reserved_from (TIMESTAMP, nullable) - Reservation start time
+- reserved_to (TIMESTAMP, nullable) - Reservation end time
+- created_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP)
+- updated_at (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP ON UPDATE)
+```
+
 ### orders
 ```
 - id (INT, PRIMARY KEY, AUTO_INCREMENT)
 - customer_id (INT, FOREIGN KEY → customers.id, nullable)
+- table_id (INT, FOREIGN KEY → tables.id, nullable) - Dine-in table reference
 - subtotal (DECIMAL(10,2))
 - discount (DECIMAL(10,2), DEFAULT 0)
 - tax (DECIMAL(10,2))
@@ -174,46 +207,69 @@ erDiagram
    - One customer can place many orders
    - Orders can also be anonymous (NULL customer_id)
 
-4. **Orders → Order Items** (1:M)
+4. **Tables → Orders** (1:M)
+   - One table can have many orders (sequential, not concurrent)
+   - Dine-in orders reference a table; takeout orders have NULL table_id
+
+5. **Orders → Order Items** (1:M)
    - One order contains many items
    - Each item links to a product and quantity
 
 ### How Data Flows
 
-#### Creating an Order
+#### Creating a Dine-In Order
 ```
-Customer → Order (with customer_id)
-         ↓
-      Order Items (links to Products)
-         ↓
-      Inventory (quantity decremented)
-```
-
-#### Querying Sales Data
-```
-Orders (filter by date range)
-   ↓
-Order Items (calculate totals)
-   ↓
-Products (get names and details)
+Cashier Selects Table → Table Status Updated to 'occupied'
+                      ↓
+                   Order Created (with table_id)
+                      ↓
+                   Order Items (links to Products)
+                      ↓
+                   Inventory (quantity decremented)
 ```
 
-#### Inventory Management
+#### Creating a Takeout Order
 ```
-Products → Inventory → Check reorder_level
-              ↓
-         If quantity ≤ reorder_level
-              ↓
-         Alert for restocking
+Order Created (table_id = NULL)
+            ↓
+         Order Items (links to Products)
+            ↓
+         Inventory (quantity decremented)
+```
+
+#### Table Lifecycle
+```
+Available → Cashier Selects → Occupied (order placed)
+                           ↓
+                      Order Completed
+                           ↓
+                        Available
 ```
 
 ## Sample Queries
 
-### Get all orders with customer details
+### Get all available tables
 ```sql
-SELECT o.id, c.name, o.total, o.payment_method, o.created_at
+SELECT * FROM "tables"
+WHERE status = 'available'
+ORDER BY table_number ASC;
+```
+
+### Get table with current order details
+```sql
+SELECT t.id, t.table_number, t.capacity, t.status, 
+       o.id as order_id, o.total, o.payment_method
+FROM "tables" t
+LEFT JOIN orders o ON t.current_order_id = o.id
+WHERE t.table_number = ?;
+```
+
+### Get all orders with table information
+```sql
+SELECT o.id, c.name, t.table_number, o.total, o.payment_method, o.created_at
 FROM orders o
 LEFT JOIN customers c ON o.customer_id = c.id
+LEFT JOIN "tables" t ON o.table_id = t.id
 ORDER BY o.created_at DESC;
 ```
 
@@ -260,7 +316,7 @@ ORDER BY c.total_spent DESC;
 |-----------|---------|
 | PRIMARY KEY (id) | Unique identifier for each record |
 | FOREIGN KEY | Maintains referential integrity between tables |
-| UNIQUE (name, email, phone) | Prevents duplicate entries |
+| UNIQUE (name, email, phone, table_number) | Prevents duplicate entries |
 | NOT NULL | Ensures required fields are always present |
 | DEFAULT values | Auto-fills common values |
 | DECIMAL precision | Accurate financial calculations |
@@ -269,7 +325,9 @@ ORDER BY c.total_spent DESC;
 
 - Use transactions when inserting orders with multiple items to ensure atomicity
 - Always decrement inventory when an order is created
+- Update table status when order is created (occupied) and completed (available)
 - Consider archiving old orders for performance
 - Regularly backup the database
-- Index frequently queried columns (customer_id, product_id, created_at)
+- Index frequently queried columns (customer_id, product_id, created_at, table_id)
 - Use prepared statements to prevent SQL injection
+- Implement real-time table status polling (10-second intervals) for live updates in UI
