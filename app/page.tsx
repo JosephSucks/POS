@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import ProductGrid from "./components/product-grid"
 import CartSidebar from "./components/cart-sidebar"
 import CategorySidebar from "./components/category-sidebar"
+import TableSidebar from "./components/table-sidebar"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
@@ -17,7 +18,10 @@ export default function POSPage() {
 
   return (
     <div className="flex h-screen bg-background">
-      <CategorySidebar selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
+      <div className="flex flex-col overflow-y-auto">
+        <CategorySidebar selectedCategory={selectedCategory} onSelectCategory={setSelectedCategory} />
+        <TableSidebar />
+      </div>
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         <div className="sticky top-0 z-10 bg-background p-4 border-b">
