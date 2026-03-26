@@ -1,11 +1,13 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Minus, Plus, ShoppingCart, Trash2, User, Tag } from "lucide-react"
+import { Minus, Plus, ShoppingCart, Trash2, User, Tag, AlertCircle } from "lucide-react"
 import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useCart } from "../context/cart-context"
+import { useTable } from "../context/table-context"
 import CustomerModal from "./customer-modal"
 import DiscountModal from "./discount-modal"
 
@@ -13,8 +15,11 @@ export default function CartSidebar() {
   const router = useRouter()
   const { cart, removeFromCart, updateQuantity, cartTotal, itemCount, customer, appliedDiscount, discountAmount } =
     useCart()
+  const { currentTableId, tables } = useTable()
   const [showCustomerModal, setShowCustomerModal] = useState(false)
   const [showDiscountModal, setShowDiscountModal] = useState(false)
+
+  const selectedTable = tables.find((t) => t.id === currentTableId)
 
   const handleCheckout = () => {
     router.push("/checkout")
@@ -31,6 +36,14 @@ export default function CartSidebar() {
           {itemCount} items
         </span>
       </div>
+
+      {selectedTable && (
+        <div className="border-b bg-blue-50 dark:bg-blue-950 p-3">
+          <p className="text-xs font-medium text-blue-900 dark:text-blue-100">
+            📍 Table {selectedTable.table_number} ({selectedTable.capacity} seats)
+          </p>
+        </div>
+      )}
 
       {/* Customer Section */}
       <div className="border-b p-4">
@@ -112,8 +125,8 @@ export default function CartSidebar() {
         )}
       </div>
 
-      <div className="border-t p-4">
-        <div className="mb-4 space-y-2">
+      <div className="border-t p-4 space-y-3">
+        <div className="space-y-2">
           <div className="flex justify-between">
             <p>Subtotal</p>
             <p>${cartTotal.toFixed(2)}</p>
@@ -129,7 +142,15 @@ export default function CartSidebar() {
             <p>${(cartTotal - discountAmount).toFixed(2)}</p>
           </div>
         </div>
-        <Button className="w-full" size="lg" disabled={cart.length === 0} onClick={handleCheckout}>
+        {cart.length > 0 && !selectedTable && (
+          <Alert className="border-yellow-300 bg-yellow-50 dark:bg-yellow-950">
+            <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+            <AlertDescription className="text-xs text-yellow-800 dark:text-yellow-200">
+              Please select a table to proceed with checkout
+            </AlertDescription>
+          </Alert>
+        )}
+        <Button className="w-full" size="lg" disabled={cart.length === 0 || !selectedTable} onClick={handleCheckout}>
           Checkout
         </Button>
       </div>
